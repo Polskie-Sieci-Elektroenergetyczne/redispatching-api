@@ -130,7 +130,7 @@ channels:
     description: Kanał do wysyłania informacji o wydanych przez OSD poleceniach redysponowania w związku z wydanymi przez OSP poleceniami redysponowania    
     messages:      
       PsdiRedispatchRealizationMessage:
-        $ref: '#/components/messages/PsdiRedispatchRealizationMessageDto'    
+        $ref: '#/components/messages/PsdiRedispatchRealizationMessage'    
     bindings:
       amqp:        
         is: routingKey
@@ -149,7 +149,7 @@ channels:
     description: Kanał do odbioru potwierdzenia przetworzenia informacji przekazanych kanałem B2B
     messages:
       PsdiRequestStatusMessage:
-        $ref: '#/components/messages/PsdiRedispatchRealizationResultDto'
+        $ref: '#/components/messages/PsdiRedispatchRealizationResult'
     bindings:
       amqp:
         is: queue
@@ -167,7 +167,7 @@ channels:
     description: Kanał do wysyłania informacji o ograniczeniach w sieci OSD niezwiązanych z wydanym poleceniem OSP
     messages:      
       PsdiRestrictionsMessage:
-        $ref: '#/components/messages/PsdiRestrictionsMessageDto'    
+        $ref: '#/components/messages/PsdiRestrictionsMessage'    
     bindings:
       amqp:
         is: routingKey
@@ -186,7 +186,7 @@ channels:
     description: Kanał do wysyłania informacji o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
     messages:      
       PsdiEWykCertMessage:
-        $ref: '#/components/messages/PsdiEwykCertMessageDto'    
+        $ref: '#/components/messages/PsdiEwykCertMessage'    
     bindings:
       amqp:
         is: routingKey
@@ -205,7 +205,7 @@ channels:
     description: Kanał do wysyłania do OSP informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
     messages:      
       PsdiUOzeMessage:
-        $ref: '#/components/messages/PsdiUOzeMessageDto'    
+        $ref: '#/components/messages/PsdiUOzeMessage'    
     bindings:
       amqp:
         is: routingKey
@@ -224,7 +224,7 @@ channels:
     description: Kanał do wysyłania do OSD informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy poza aplikacją WOZE po wydanym poleceniu przez OSP
     messages:      
       PsdiUOzeMessage:
-        $ref: '#/components/messages/PsdiUOzeMessageDto'    
+        $ref: '#/components/messages/PsdiUOzeMessage'    
     bindings:
       amqp:
         is: queue
@@ -242,7 +242,7 @@ channels:
     description: Kanał do przekazania do OSP informacji o zmianie przypisania POB do pojedynczego MWE
     messages:      
       PsdiPOBMessage:
-        $ref: '#/components/messages/PsdiPOBMessageDto'    
+        $ref: '#/components/messages/PsdiPOBMessage'    
     bindings:
       amqp:
         is: routingKey
@@ -429,94 +429,94 @@ components:
         description: Korelacja na podstawie tsoMsgId lub entityMsgId z nagłówka.
         location: $message.payload#/refMsgId
     
-    PsdiRedispatchDto:
+    PsdiRedispatch:
       name: Informacja o wydanych poleceniach redysponowania
       title: Informacja o wydanych poleceniach redysponowania
       contentType: application/json      
       payload:
         type: array
         items: 
-          $ref: '#/components/schemas/PsdiRedispatchDto'      
+          $ref: '#/components/schemas/PsdiRedispatch'      
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId  
 
-    PsdiRedispatchRealizationMessageDto:
+    PsdiRedispatchRealizationMessage:
       name: Informacja o wydanych poleceniach redysponowania
       title: Informacja o wydanych poleceniach redysponowania
       contentType: application/json
       headers:
-        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+        $ref: '#/components/schemas/PsdiRedispatchHeader'
       payload:
         type: array
         items: 
-          $ref: '#/components/schemas/PsdiRedispatchRealizationDto'      
+          $ref: '#/components/schemas/PsdiRedispatchRealization'      
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId
 
-    PsdiUOzeMessageDto:
+    PsdiUOzeMessage:
       name: Informacja o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
       title: Informacja o zgłoszeniach uOze
       contentType: application/json
       headers:
-        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+        $ref: '#/components/schemas/PsdiRedispatchHeader'
       payload:
         type: array
         items: 
-          $ref: '#/components/schemas/PsdiUOzeDto'      
+          $ref: '#/components/schemas/PsdiUOze'      
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId
 
-    PsdiPOBMessageDto:
+    PsdiPOBMessage:
       name: Informacja  o zmianie przypisania POB do pojedynczego MWE
       title: Informacja o POB
       contentType: application/json
       headers:
-        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+        $ref: '#/components/schemas/PsdiRedispatchHeader'
       payload:
         type: array
         items: 
-          $ref: '#/components/schemas/PsdiPOBDto'      
+          $ref: '#/components/schemas/PsdiPOB'      
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId
 
-    PsdiEwykCertMessageDto:
+    PsdiEwykCertMessage:
       name: Informacja o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
       title: Informacja o E_wyk_cert
       contentType: application/json
       headers:
-        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+        $ref: '#/components/schemas/PsdiRedispatchHeader'
       payload:
         type: array
         items: 
-          $ref: '#/components/schemas/PsdiEWykCertDto'      
+          $ref: '#/components/schemas/PsdiEWykCert'      
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId
 
-    PsdiRestrictionsMessageDto:
+    PsdiRestrictionsMessage:
       name: Informacja o ograniczeniach w sieci OSD nie związanych z wydanym przez OSP poleceniem redysponowania
       title: Informacja o ograniczeniach w sieci OSD
       contentType: application/json
       headers:
-        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'      
+        $ref: '#/components/schemas/PsdiRedispatchHeader'      
       payload:
         type: array
         items: 
-          $ref: '#/components/schemas/PsdiRestrictionsDto'      
+          $ref: '#/components/schemas/PsdiRestrictions'      
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId
 
-    PsdiRedispatchRealizationResultDto:
+    PsdiRedispatchRealizationResult:
       name: Informacja o przetworzeniu informacji o wydanym przez OSD pocelceniu redysponowania
       title: Informacja o przetworzeniu informacji o wydanym przez OSD pocelceniu redysponowania
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/PsdiMessageResultDto'
+        $ref: '#/components/schemas/PsdiMessageResult'
       correlationId:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.payload#/serverMsqId
@@ -860,7 +860,7 @@ components:
                 description: "Treść komunikatu, które spowodował błąd"
                 additionalProperties: true
     
-    PsdiRedispatchHeaderDto:
+    PsdiRedispatchHeader:
       type: object
       additionalProperties: false
       required:
@@ -894,7 +894,7 @@ components:
           minLength: 3
           maxLength: 3
      
-    PsdiMessageResultDto:
+    PsdiMessageResult:
       type: object
       additionalProperties: false
       required:
@@ -902,7 +902,7 @@ components:
         - status
       properties:
         header:
-          $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+          $ref: '#/components/schemas/PsdiRedispatchHeader'
         status:
           type: string
           enum:
@@ -935,7 +935,7 @@ components:
                 description: Opis naruszenia walidacji powstałego w czasie przetwarzania
                 example:     
 
-    PsdiRedispatchDto:
+    PsdiRedispatch:
       type: object
       description: "Komunikat informujący o wydanym przez OSP poleceniu redysponowania"
       required:
@@ -949,9 +949,9 @@ components:
         redispatchTable:
           type: array
           items: 
-            $ref: '#/components/schemas/PsdiRedispatchTableDto'
+            $ref: '#/components/schemas/PsdiRedispatchTable'
 
-    PsdiRedispatchRealizationDto:
+    PsdiRedispatchRealization:
       type: object
       description: "Komunikat informujący o wydanym przez OSD poleceniu redysponowania"
       required:
@@ -972,9 +972,9 @@ components:
         redispatchDetail:
           type: array
           items: 
-            $ref: '#/components/schemas/PsdiRedispatchRealizationTableDto'
+            $ref: '#/components/schemas/PsdiRedispatchRealizationTable'
 
-    PsdiUOzeDto:
+    PsdiUOze:
       type: object
       description: "Komunikat informujący o Przekazanie informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP"
       required:
@@ -1012,7 +1012,7 @@ components:
           type: string
           description: "numer IPA, którego dotyczy system wsparcia"
 
-    PsdiPOBDto:
+    PsdiPOB:
       type: object
       description: "Komunikat informujący o zmianie przypisania POB do pojedynczego MWE"
       required:
@@ -1041,7 +1041,7 @@ components:
           examples:
             - 2025-11-02        
 
-    PsdiEWykCertDto:
+    PsdiEWykCert:
       type: object
       description: "Komunikat informujący o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP"
       required:
@@ -1062,14 +1062,14 @@ components:
         eWykCertTable:
           type: array
           items: 
-            $ref: '#/components/schemas/PsdiEWykCertTableDto'
+            $ref: '#/components/schemas/PsdiEWykCertTable'
         eWykCertTableTimeChange:
           type: array
           description: "Wartości e-wyk-cert dla dodatkowej godziny przy zmianie czasu dla godzin 2:15, 2:30, 2:45, 3:00"
           items: 
-            $ref: '#/components/schemas/PsdiEWykCertTableDto'
+            $ref: '#/components/schemas/PsdiEWykCertTable'
 
-    PsdiRestrictionsDto:
+    PsdiRestrictions:
       type: object
       description: "Komunikat informujący o ograniczeniach w sieci OSD nie będących efektem wydanego przez OSP polecenia redysponowania"
       required:
@@ -1090,14 +1090,14 @@ components:
         redispatchTable:
           type: array
           items: 
-            $ref: '#/components/schemas/PsdiRestrictionTableDto'
+            $ref: '#/components/schemas/PsdiRestrictionTable'
         redispatchTableTimeChange:
           type: array
           description: "Wartości P_zad_osd dla dodatkowej godziny przy zmianie czasu dla godzin 2:15, 2:30, 2:45, 3:00"
           items: 
-            $ref: '#/components/schemas/PsdiRestrictionTableDto'
+            $ref: '#/components/schemas/PsdiRestrictionTable'
 
-    PsdiRedispatchTableDto:
+    PsdiRedispatchTable:
       type: object
       description: "Tabela przedziałów czasowych polecenia redysponowania"
       properties:
@@ -1164,7 +1164,7 @@ components:
                           - S
                       example: "B"
 
-    PsdiRedispatchRealizationTableDto:
+    PsdiRedispatchRealizationTable:
       type: object
       description: "Tabela przedziałów czasowych polecenia redysponowania"
       required:
@@ -1198,7 +1198,7 @@ components:
             - awaryjne
           example: "bilansowe"  
 
-    PsdiEWykCertTableDto:
+    PsdiEWykCertTable:
       type: object
       description: "Tabela przedziałów czasowych e-wyk-cert"
       required:
@@ -1217,7 +1217,7 @@ components:
           description: "Wolumenie energii wyprodukowanej przez instalację wiatrową w przedziale czasowym t, zmierzony na zaciskach generatorów turbin wiatrowych, wyrażony z kWh z dokładnością do 2 miejsc po przecinku. W zależności od dokładności urządzeń pomiarowych do przedziału t oznaczonego 00:15:00 może zostać zakwalifikowany pomiar od 00:00:01 do 00:15:00 albo od 00:00:01 do 00:14:59 albo inny obejmujący w maksymalnym zakresie ten przedział"
           example: 12.22
 
-    PsdiRestrictionTableDto:    
+    PsdiRestrictionTable:    
       type: object
       description: "Tabela przedziałów czasowych polecenia redysponowania"
       required:
