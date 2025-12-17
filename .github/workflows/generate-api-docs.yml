@@ -2,7 +2,7 @@ name: Generate and Deploy API Docs
 
 on:
   push:
-    branches: ["master"]  # Trigger on push to main
+    branches: ["main", "master"]  # Trigger on push to main
     paths:
       - '.github/workflows/generate-api-docs.yml'
       - 'specs/redispatching-asyncapi.yml'
