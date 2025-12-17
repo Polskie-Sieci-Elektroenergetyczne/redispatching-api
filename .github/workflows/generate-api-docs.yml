@@ -1,0 +1,49 @@
+name: Generate and Deploy AsyncAPI Docs
+
+on:
+  push:
+    branches: ["master"]  # Trigger on push to main
+    paths:
+      - '.github/workflows/generate-api-docs.yml'
+      - 'specs/redispatching-asyncapi.yml'
+      - 'specs/redispatching-openapi.yml'
+      - 'docs/index.html'
+
+# Permissions required to push the generated HTML to the gh-pages branch
+permissions:
+  contents: write
+
+jobs:
+  generate-api-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Prepare Folders
+        run: |
+          mkdir -p dist/openapi
+          mkdir -p dist/asyncapi
+
+      - name: Copy Landing Page
+        run: cp docs/index.html dist/index.html
+
+      - name: Generate OpenAPI documentation
+        run: npx @redocly/cli build-docs specs/redispatching-openapi.yml -o dist/openapi/index.html     
+
+      - name: Install AsyncAPI Generator
+        run: npm install -g @asyncapi/generator
+      
+      - name: Generate AsyncAPI documentation
+        run: ag specs/redispatching-asyncapi.yml @asyncapi/html-template -o dist/asyncapi -p singleFile=true --force-write
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
