@@ -1,0 +1,707 @@
+openapi: '3.1.2'
+info:
+  title: API Title
+  version: '1.0'
+  license: 
+    name: nazwa licencji
+    url: url do opisu licencji    
+servers:
+  - url: https://b2b.pse.pl/
+            
+        
+paths:
+  /psdi/api/v1/redispatch:
+    get:
+      summary: Pobieranie listy wydanych poleceń redysponowania dla podanej doby
+      operationId: getRedispatchByDate
+      description: 
+      parameters: 
+        - name: redispatchDate
+          in: query
+          description: Doba redysponowania
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/redispatchOspMsg'
+        '400': 
+          description: invalid date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Odmowa dostępu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: redispatch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: 
+        - BearerAuth: []
+    post: 
+      summary: Przekazywanie listy wydanych przez OSD poleceń redysponowania w zadanej dobie
+      operationId: postRedispatchByDate
+      description: 
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              $ref: '#/components/schemas/reductionsOsd'
+      responses: 
+        '200':
+          description: successful operation
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/response'
+        '400':
+          description: invalid data
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/redispatch/status:
+    get:
+      summary: Pobieranie status przetworzenia przekazanych przez OSD poleceń redysponowania
+      operationId: getRedispatchState
+      description: 
+      parameters: 
+        - name: requestId
+          in: query
+          description: Identyfikator przesłanych danych
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/processingStatusResponse'
+        '400': 
+          description: invalid request Id
+        '404':
+          description: request not found
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/restrictions:
+    post:
+      summary: Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP
+      operationId: postRestrictionsByDate
+      description: 
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              $ref: '#/components/schemas/restrictionsOsd'
+      responses: 
+        '200':
+          description: successful operation
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/response'
+        '400':
+          description: invalid data
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/restrictions/status:
+    get:
+      summary: Pobieranie status przetworzenia przekazanych przez OSD wykazu poleceń redysponowania niezwiązanych z wydanym poleceniem OSP
+      operationId: getRestrictionsState
+      description: 
+      parameters: 
+        - name: requestId
+          in: query
+          description: Identyfikator przesłanych danych
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/processingStatusResponse'
+        '400': 
+          description: invalid request Id
+        '404':
+          description: request not found
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/ewykcert:
+    post:
+      summary: Wolumen energii Ewyk_cert
+      operationId: postEwykCertByDate
+      description: 
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              $ref: '#/components/schemas/eWykCerts'
+      responses: 
+        '200':
+          description: successful operation
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/response'
+        '400':
+          description: invalid data
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/ewykcert/status:
+    get:
+      summary: Pobieranie status przetworzenia przekazanych przez OSD wartości E_WYK_CERT
+      operationId: getEWykCertState
+      description: 
+      parameters: 
+        - name: requestId
+          in: query
+          description: Identyfikator przesłanych danych
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/processingStatusResponse'
+        '400': 
+          description: invalid request Id
+        '404':
+          description: request not found  
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/uoze:
+    get:
+      summary: Zgłoszenia uOZE przekazywane do OSD przez system WOZE
+      operationId: getUOze
+      description: 
+      parameters: 
+        - name: redispatchDate
+          in: query
+          description: Doba redysponowania
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/uozes'
+        '400': 
+          description: invalid request Id
+        '404':
+          description: request not found  
+      security: 
+        - BearerAuth: []
+    post:
+      summary: Zgłoszenie z uOZE przekazanych do OSD poza systemem WOZE
+      operationId: postUOze
+      description: 
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              $ref: '#/components/schemas/uozes'
+      responses: 
+        '200':
+          description: successful operation
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/response'
+        '400':
+          description: invalid data
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/uoze/status:
+    get:
+      summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń uOZE
+      operationId: getuOzeState
+      description: 
+      parameters: 
+        - name: requestId
+          in: query
+          description: Identyfikator przesłanych danych
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/processingStatusResponse'
+        '400': 
+          description: invalid request Id
+        '404':
+          description: request not found
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/pob:
+    post:
+      summary: Zmiana POB dla pojedynczego MWE
+      operationId: postPob
+      description: 
+      requestBody: 
+        content: 
+          application/json: 
+            schema: 
+              $ref: '#/components/schemas/pobs'
+      responses: 
+        '200':
+          description: successful operation
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/response'
+        '400':
+          description: invalid data
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+      security: 
+        - BearerAuth: []
+  /psdi/api/v1/pob/status:
+    get:
+      summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń zmiany POB dla pojedynczego MWE
+      operationId: getPobState
+      description: 
+      parameters: 
+        - name: requestId
+          in: query
+          description: Identyfikator przesłanych danych
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/processingStatusResponse'
+        '400': 
+          description: invalid request Id
+        '404':
+          description: request not found  
+      security: 
+        - BearerAuth: []
+components:
+  securitySchemes: 
+    BearerAuth:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+      description: Token JWT uzyskany po zalogowaniu do konta B2B auth.ppb.pse.pl
+  schemas:
+    timeseriesOsp:
+      type: object
+      properties:
+        position:
+          type: integer
+          format: int32
+          description: Kolejny numer pozycji (punktu czasowego), interpertowany w zależności od SeriesPeriod.timeInterval oraz SeriesPeriod.resolution
+        pZad:
+          type: integer
+          format: int64
+          description: 'Zadany przez OSP maksymalny poziom dopuszczalenej generacji mocy czynnej w miejscu przyłączenia instalacji fotowoltaicznej do sieci OSD, wyrażony w kW z dokładnością do 1 kW'
+        redispatchType:
+          type: string
+          description: 'Typ polecenia, B - bilansowe, S - sieciowe'
+          enum:
+            - B
+            - S
+    timeseriesPZadOsd:
+      type: object
+      properties:
+        position:
+          type: integer
+          format: int32
+          description: Kolejny numer pozycji (punktu czasowego), interpertowany w zależności od SeriesPeriod.timeInterval oraz SeriesPeriod.resolution
+        pZadOsd:
+          type: integer
+          format: int32
+          nullable: true
+          description: 'Maksymalny poziom generacji mocy czynnej instalacji fotowoltaicznej zdeterminowany przyczynami innymi niż wydane przez OSP polecenie Redysponowania Nierynkowego, w poszczególnych przedziałach czasowych, wyrażony w kW z dokładnością do 1 kW'
+    timeseriesEWykCert:
+      type: object
+      properties:
+        position:
+          type: integer
+          format: int32
+          description: Kolejny numer pozycji (punktu czasowego), interpertowany w zależności od SeriesPeriod.timeInterval oraz SeriesPeriod.resolution
+        eWykCert:
+          type: number
+          format: double
+          nullable: true
+          description: 'Wolumen energii wyprodukowanej przez instalację wiatrową w przedziale czasowym t, zmierzony na zaciskach generatorów turbin wiatrowych, wyrażony w kWh z dokładnością do 2 miejsc po przecinku'
+    redispatchTableOsp:
+      type: object
+      properties: 
+        seriesPeriod:
+          type: object
+          description: 'Seria danych w podanym okresie (szereg czasowy)'
+          properties:
+            timeInterval:
+              type: object
+              description: 'Przedział czasowy - zakres szeregu czasowego'
+              properties:
+                start: 
+                  type: string
+                  format: date-timea
+                  description: 'Data i godzina początku okresu w UTC'
+                  example: "2024-03-12T02:00:00Z"
+                end: 
+                  type: string 
+                  format: date-timea
+                  description: 'Data i godzina końca okresu w UTC'
+                  example: "2024-03-13T02:00:00Z"
+            resolution: 
+              type: string
+              description: 'Rozdzielczość serii danych: PT15M - 15 minut'
+              enum: 
+                - PT15M
+            seriesPoints:
+              type: array
+              description: 'Tablica punktów i wartości'
+              items: 
+                $ref: '#/components/schemas/timeseriesOsp'
+    redispatchTableOsd:
+      type: object
+      properties: 
+        redispatchTimeBegin:
+          type: string
+          format: date-time
+          description: 'Początek redysponowania nierynkowego po stronie instalacji w UTC'
+        redispatchTimeEnd:
+          type: string
+          format: date-time
+          description: 'Koniec redysponowania nierynkowego po stronie instalacji w UTC'
+        pZad:
+          type: integer
+          format: int32
+          nullable: true
+          description: 'Zadany przez OSD, zdeterminowany wydanym przez OSP poleceniem redysponowania nierynkowego, maksymalny poziom dopuszczalnej generacji mocy czynnej w miejscu przyłączenia instalacji wiatrowej do sieci OSD, wyrażony w kW z dokładnością do 1 '
+        redispatchType:
+          type: string
+          description: 'Typ polecenia, B - bilansowe, S - sieciowe'
+          enum:
+            - B
+            - S
+    redispatchOsp:
+      type: object
+      properties: 
+        mRID:
+          type: string
+          description: 'Unikalny identyfikator MWE'
+          nullable: false
+          example: ''
+        redispatchTable:
+          type: array
+          items: 
+            $ref: '#/components/schemas/redispatchTableOsp'
+    restrctionOsd:
+      type: object
+      properties: 
+        mRID:
+          type: string
+          description: 'Unikalny identyfikator MWE'
+          nullable: false
+          example: ''
+        redispatchDate:
+          type: string
+          format: date
+          description: 'Doba redysponowania'
+          nullable: false
+          example: ''
+        seriesPeriods:
+          type: array
+          items:
+            type: object
+            description: 'Seria danych w podanym okresie (szereg czasowy)'
+            properties:
+              timeInterval:
+                type: object
+                description: 'Przedział czasowy - zakres szeregu czasowego'
+                properties:
+                  start: 
+                    type: string
+                    format: date-timea
+                    description: 'Data i godzina początku okresu w UTC'
+                    example: "2024-03-12T02:00:00Z"
+                  end: 
+                    type: string 
+                    format: date-timea
+                    description: 'Data i godzina końca okresu w UTC'
+                    example: "2024-03-13T02:00:00Z"
+              resolution: 
+                type: string
+                description: 'Rozdzielczość serii danych: PT15M - 15 minut'
+                enum: 
+                  - PT15M
+              seriesPoints:
+                type: array
+                description: 'Tablica punktów i wartości'
+                items: 
+                  $ref: '#/components/schemas/timeseriesPZadOsd'
+    redispatchOsd:
+      type: object
+      properties: 
+        mRID:
+          type: string
+          description: 'Unikalny identyfikator MWE'
+          nullable: false
+          example: ''
+        redispatchDate:
+          type: string
+          format: date
+          description: 'Doba redysponowania wynikająca z polecenia wydanego przez OSP'
+          nullable: false
+          example: ''
+        redispatchTable:
+          type: array
+          items: 
+            $ref: '#/components/schemas/redispatchTableOsd'
+    eWykCert:
+      type: object
+      properties: 
+        mRID:
+          type: string
+          description: 'Unikalny identyfikator MWE'
+          nullable: false
+          example: ''
+        redispatchDate:
+          type: string
+          format: date
+          description: 'Doba redysponowania wynikająca z polecenia wydanego przez OSP'
+          nullable: false
+          example: ''
+        seriesPeriods:
+          type: array
+          items:
+            type: object
+            description: 'Seria danych w podanym okresie (szereg czasowy)'
+            properties:
+              timeInterval:
+                type: object
+                description: 'Przedział czasowy - zakres szeregu czasowego'
+                properties:
+                  start: 
+                    type: string
+                    format: date-timea
+                    description: 'Data i godzina początku okresu w UTC'
+                    example: "2024-03-12T02:00:00Z"
+                  end: 
+                    type: string 
+                    format: date-timea
+                    description: 'Data i godzina końca okresu w UTC'
+                    example: "2024-03-13T02:00:00Z"
+              resolution: 
+                type: string
+                description: 'Rozdzielczość serii danych: PT15M - 15 minut'
+                enum: 
+                  - PT15M
+              seriesPoints:
+                type: array
+                description: 'Tablica punktów i wartości'
+                items: 
+                  $ref: '#/components/schemas/timeseriesEWykCert'
+    uoze:
+      type: object
+      properties:
+        mRID:
+          type: string
+          description: 'Unikalny identyfikator MWE'
+          nullable: false
+          example: ''
+        redispatchDate:
+          type: string
+          format: date
+          description: 'Doba redysponowania wynikająca z polecenia wydanego przez OSP'
+          nullable: false
+          example: ''
+        notificationDate:
+          type: string
+          format: date
+          description: 'Data kiedy OSD został poinformowany o tym czy i jaka część zredukowanej energii powinna zostać rozliczona w danym systemie wsparcia'
+          nullable: false
+          example: ''
+        supportingSystem:
+          type: string
+          description: 'Systemie wsparcia w jakim powinna zostać rozliczona energia'
+          enum: 
+            - auction
+            - auctionWith
+            - greenCertificate
+        energy:
+          type: integer
+          format: int32
+          description: '% zredukowanej energii, która  powinna zostać rozliczona w danym systemie wsparcia (art. 93 ust. 18 ustawy o odnawialnych źródłach energii (Dz.U.2023.1436))'
+        ipaNumber:
+          type: string
+          description: 'numer IPA, którego dotyczy system wsparcia'
+    pob:
+      type: object
+      properties:
+        mRID:
+          type: string
+          description: 'Unikalny identyfikator MWE'
+          nullable: false
+          example: ''
+        pobName:
+          type: string
+          dscription: 'Nazwa podmiotu odpowiedzialnego za bilansowanie'
+          nullable: false
+        pobNIP:
+          type: string
+          description: 'NIP podmiotu odpowiedzialnego za bilansowanie'
+          nullable: false
+        pobDate:
+          type: string
+          format: date
+          description: 'Data od kiedy POB pełni funkcję dla MWE'
+          nullable: false
+    redispatchOspMsg:
+      type: array
+      items: 
+        $ref: '#/components/schemas/redispatchOsp'
+    reductionsOsd:
+      type: array
+      items: 
+        $ref: '#/components/schemas/redispatchOsd'
+    restrictionsOsd:
+      type: array
+      items: 
+        $ref: '#/components/schemas/restrctionOsd'
+    eWykCerts:
+      type: array
+      items:
+        $ref: '#/components/schemas/eWykCert'
+    uozes:
+      type: array
+      items:
+        $ref: '#/components/schemas/uoze'
+    pobs:
+      type: array
+      items:
+        $ref: '#/components/schemas/pob'
+    response:
+      type: object
+      properties: 
+        requestId:
+          type: string
+          format: UUID
+          description: Unikalny identyfikator przyjętego do przetwarzania komunikatu
+    responseDetail:
+      type: object
+      description: Opis naruszeń walidacji w czasie przetwarzenia przesłanych dokumentów
+      properties:
+        severity:
+          type: string
+          description: Stopień naruszenia walidacji powstałego w czasie przetwarzania
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          example: WARN
+        code:
+          type: string
+          description: Kod naruszenia walidacji powstałego w czasie przetwarzania
+          maxLength: 10
+          example: 
+        field:
+          type: string
+          description: wskazanie na element w zgłoszeniu
+          example: 
+        message:
+          type: string
+          description: Opis naruszenia walidacji powstałego w czasie przetwarzania
+          example: 
+      required:
+      - message
+      - severity
+      - code
+      title: ValidationResult
+    processingStatusResponse:
+      type: object
+      description: Odpowiedź na zapytanie o status przetwarzania przesłanego dokumentu
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: "Unikalne ID nadane przez system PSE, które służy do identyfikacji procesu przesłania danych"
+          example: 550e8400-e29b-41d4-a716-446655440000        
+        status:
+          type: string
+          description: Status operacji przetworzenia przesłanych danych
+          enum:
+          - ACCEPTED
+          - APPROVED
+          - REJECTED
+          example: APPROVED
+        validationViolations:
+          type: array
+          description: Błędy i naruszenia walidacji zgłoszone w czasie przetwarzania
+            przesłanych danych
+          items:
+            $ref: "#/components/schemas/responseDetail"
+      required:
+      - serverMsgId
+      - status       
+    ErrorResponse:
+      type: object
+      description: Odpowiedź z serwera w przypadku błędu
+      properties:
+        message:
+          type: string
+          description: Opis błędu
+          example: Błąd przetwarzania
+        errorDetails:
+          type: string
+          description: Szegóły przyczyny błędu
+          example: Brak elementu o podanym mRID
+        requestId:
+          type: string
+          format: UUID
+          description: Unikalny identyfikator przyjętego do przetwarzania komunikatu
+      required:
+      - errorDetails
+      - message
