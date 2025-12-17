@@ -1,4 +1,4 @@
-name: Generate and Deploy AsyncAPI Docs
+name: Generate and Deploy API Docs
 
 on:
   push:
