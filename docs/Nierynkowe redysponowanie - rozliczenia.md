@@ -20,8 +20,9 @@ Niniejsze standardy w zakresie rozliczeń nierynkowego redysponowania opierają 
 
 # Ogólne zestawienie przekazywanych komunikatów dla rozliczeń nierynkowego redysponowania
 
-[Polecenia redukcji](redispatch.md)   
-[Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP](restrictions.md)   
-[Wolumen energii Ewyk_cert](ewyk.md)   
-[Zgłoszenia uOZE](uoze.md)  
-[Zmiana POB dla pojedynczego MWE](pob.md)  
+[Historyczne polecenia redukcji](komunikat%20informacji%20o%20historycznych%20poleceniach%20redysponowania.md)   
+[Polecenia redukcji wydane przez OSD](komunikat%20informacji%20o%20poleceniach%20redysponowania%20wydanych%20przez%20OSD.md)   
+[Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP](komunikat%20informacji%20o%20ograniczeniach%20sieciowych%20w%20trakcie%20redysponowania.md)   
+[Wolumen energii wyprodukowanej objętej systemem wsparcia (Ewyk_cert)](komunikat%20informacji%20o%20energi%20wyprodukowanej%20objętej%20systemem%20wsparcia.md)   
+[Zgłoszenia informacji o chęci skorzystania z aukcyjnego systemu wsparcia (uOZE)](komunikat%20informacji%20o%20chęci%20skorzystania%20z%20aukcyjnego%20systemu%20wsparcia.md)  
+[Zmiana podmiotu odpowiedzialnego za bilansowanie (POB) dla pojedynczego MWE](komunikat%20informacji%20o%20zmianie%20podmiotu%20odpowiedzialnego%20za%20bilansowanie.md)  

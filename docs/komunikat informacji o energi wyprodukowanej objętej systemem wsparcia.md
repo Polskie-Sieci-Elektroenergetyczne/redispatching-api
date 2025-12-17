@@ -1,9 +1,9 @@
-## Wolumen energii Ewyk_cert
+## Wolumen energii wyprodukowanej objętej systemem wsparcia
 
 #### Adres Rest API
 ```
-- POST psdi/api/v1/ewykcert
-- GET psdi/api/v1/ewykcert/status
+- POST psdi/api/v1/generatedenergywithsupport
+- GET psdi/api/v1/generatedenergywithsupport/status
 ```
 
 #### Nadawca
@@ -31,7 +31,7 @@ sequenceDiagram
     participant REST Client
     participant B2B REST API
     participant Backend service
-    REST Client->B2B REST API: POST psdi/api/v1/ewykcert
+    REST Client->B2B REST API: POST psdi/api/v1/generatedenergywithsupport
     B2B REST API->B2B REST API: createRequest()
     B2B REST API-->REST Client: RestResponse
     B2B REST API->Backend service: approveRequest()
@@ -39,7 +39,7 @@ sequenceDiagram
     Backend service-->B2B REST API: approveResult()        
     opt
       loop  
-        REST Client->B2B REST API: GET psdi/api/v1/ewykcert/status
+        REST Client->B2B REST API: GET psdi/api/v1/generatedenergywithsupport/status
         B2B REST API-->REST Client: RestStatusResponse
       end
     end  

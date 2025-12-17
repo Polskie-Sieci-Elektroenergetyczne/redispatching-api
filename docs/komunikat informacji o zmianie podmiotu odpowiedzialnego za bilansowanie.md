@@ -1,9 +1,9 @@
-## Zmiana POB dla pojedynczego MWE 
+## Zmiana podmiotu odpowiedzialnego za bilansowanie (POB) dla pojedynczego MWE 
 #### Adres Rest API
 
 ```
-- POST psdi/api/v1/pob
-- GET psdi/api/v1/pob/status
+- POST psdi/api/v1/responsiblesubjectforgenerator
+- GET psdi/api/v1/responsiblesubjectforgenerator/status
 ```
 
 #### Nadawca
@@ -34,7 +34,7 @@ sequenceDiagram
     participant REST Client
     participant B2B REST API
     participant Backend service
-    REST Client->B2B REST API: POST psdi/api/v1/pob
+    REST Client->B2B REST API: POST psdi/api/v1/responsiblesubjectforgenerator
     B2B REST API->B2B REST API: createRequest()
     B2B REST API-->REST Client: RestResponse
     B2B REST API->Backend service: approveRequest()
@@ -42,7 +42,7 @@ sequenceDiagram
     Backend service-->B2B REST API: approveResult()        
     opt
       loop  
-        REST Client->B2B REST API: GET psdi/api/v1/pob/status
+        REST Client->B2B REST API: GET psdi/api/v1/responsiblesubjectforgenerator/status
         B2B REST API-->REST Client: RestStatusResponse
       end
     end  

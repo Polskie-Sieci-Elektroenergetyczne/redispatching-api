@@ -50,9 +50,11 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security: 
         - BearerAuth: []
+        
+  /psdi/api/v1/dsoredispatch:
     post: 
       summary: Przekazywanie listy wydanych przez OSD poleceń redysponowania w zadanej dobie
-      operationId: postRedispatchByDate
+      operationId: postDSORedispatches
       description: 
       requestBody: 
         content: 
@@ -74,10 +76,10 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security: 
         - BearerAuth: []
-  /psdi/api/v1/redispatch/status:
+  /psdi/api/v1/dsoredispatch/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD poleceń redysponowania
-      operationId: getRedispatchState
+      operationId: getDSORedispatchesState
       description: 
       parameters: 
         - name: requestId
@@ -99,10 +101,10 @@ paths:
           description: request not found
       security: 
         - BearerAuth: []
-  /psdi/api/v1/restrictions:
+  /psdi/api/v1/dispatchnetworkcontraints:
     post:
       summary: Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP
-      operationId: postRestrictionsByDate
+      operationId: postDispatchNetworkContraints
       description: 
       requestBody: 
         content: 
@@ -124,10 +126,10 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security: 
         - BearerAuth: []
-  /psdi/api/v1/restrictions/status:
+  /psdi/api/v1/dispatchnetworkcontraints/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD wykazu poleceń redysponowania niezwiązanych z wydanym poleceniem OSP
-      operationId: getRestrictionsState
+      operationId: getDispatchNetworkContraintsState
       description: 
       parameters: 
         - name: requestId
@@ -149,10 +151,10 @@ paths:
           description: request not found
       security: 
         - BearerAuth: []
-  /psdi/api/v1/ewykcert:
+  /psdi/api/v1/generatedenergywithsupport:
     post:
       summary: Wolumen energii Ewyk_cert
-      operationId: postEwykCertByDate
+      operationId: postGeneratedEnergyWithSupport
       description: 
       requestBody: 
         content: 
@@ -174,10 +176,10 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security: 
         - BearerAuth: []
-  /psdi/api/v1/ewykcert/status:
+  /psdi/api/v1/generatedenergywithsupport/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD wartości E_WYK_CERT
-      operationId: getEWykCertState
+      operationId: getGeneratedEnergyWithSupportState
       description: 
       parameters: 
         - name: requestId
@@ -199,10 +201,10 @@ paths:
           description: request not found  
       security: 
         - BearerAuth: []
-  /psdi/api/v1/uoze:
+  /psdi/api/v1/auctionsupportrequest:
     get:
       summary: Zgłoszenia uOZE przekazywane do OSD przez system WOZE
-      operationId: getUOze
+      operationId: getAuctionSupportRequest
       description: 
       parameters: 
         - name: redispatchDate
@@ -227,7 +229,7 @@ paths:
         - BearerAuth: []
     post:
       summary: Zgłoszenie z uOZE przekazanych do OSD poza systemem WOZE
-      operationId: postUOze
+      operationId: postAuctionSupportRequest
       description: 
       requestBody: 
         content: 
@@ -249,10 +251,10 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security: 
         - BearerAuth: []
-  /psdi/api/v1/uoze/status:
+  /psdi/api/v1/auctionsupportrequest/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń uOZE
-      operationId: getuOzeState
+      operationId: getAuctionSupportRequestState
       description: 
       parameters: 
         - name: requestId
@@ -274,10 +276,10 @@ paths:
           description: request not found
       security: 
         - BearerAuth: []
-  /psdi/api/v1/pob:
+  /psdi/api/v1/responsiblesubjectforgenerator:
     post:
       summary: Zmiana POB dla pojedynczego MWE
-      operationId: postPob
+      operationId: postResponsibleSubjectForGenerator
       description: 
       requestBody: 
         content: 
@@ -299,10 +301,10 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security: 
         - BearerAuth: []
-  /psdi/api/v1/pob/status:
+  /psdi/api/v1/responsiblesubjectforgenerator/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń zmiany POB dla pojedynczego MWE
-      operationId: getPobState
+      operationId: getResponsibleSubjectForGeneratorState
       description: 
       parameters: 
         - name: requestId
