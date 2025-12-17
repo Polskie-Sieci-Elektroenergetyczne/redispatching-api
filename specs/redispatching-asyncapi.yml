@@ -1,0 +1,576 @@
+asyncapi: 3.0.0
+info:
+  title: Async API for redispatching
+  version: '0.0.1'
+  description: |
+    Specyfikacja asynchronicznego API na potrzeby redysponowania 
+defaultContentType: application/json
+
+servers:
+  amqp-cluster:
+    host: "${PSE_AMQP}"
+    protocol: amqps
+    protocolVersion: '1.0'
+    description: B2B AMQP broker
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+    bindings:
+      amqp:
+        vhost: '/'
+        heartbeat: 30
+        locale: pl-PL
+        tls: true
+        bindingVersion: '0.3.0'
+
+channels:
+  redispatch.order.{entityId}:
+    address: redispatch.order.{entityId}
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał z poleceniami redysponowania dla danego podmiotu (OSD lub przedstawiciela MWE przyłączonego do sieci przesyłowej - MWEp)
+    parameters:
+      entityId:
+        description: Unikalny 5-znakowy identyfikator podmiotu.
+        location: $message.payload#/header/entityId
+    messages:
+      RedispatchOrderMessage:
+        $ref: '#/components/messages/RedispatchOrder'
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          name: redispatch.order.{entityId}
+          durable: true
+          exclusive: false
+          autoDelete: false
+        bindingVersion: '0.3.0'
+
+  redispatch.acknowledgement:
+    address: redispatch.acknowledgement
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał z odpowiedziami na polecenia redysponowania
+    messages:
+      RedispatchAcknowledgementMessage:
+        $ref: '#/components/messages/RedispatchAcknowledgement'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: redispatch
+          type: topic
+        bindingVersion: '0.3.0'
+
+  redispatch.information.{entityId}:
+    address: redispatch.information.{entityId}
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał z informacjami o zaplanowanych redysponowaniach
+    parameters:
+      entityId:
+        description: Unikalny 5-znakowy identyfikator podmiotu.
+        location: $message.payload#/header/entityId
+    messages:
+      RedispatchInformationMessage:
+        $ref: '#/components/messages/RedispatchInformation'
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          name: redispatch.information.{entityId}
+          durable: true
+          exclusive: false
+          autoDelete: false
+        bindingVersion: '0.3.0'
+
+  redispatch.failed:
+    address: redispatch.failed
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał typu DLQ dla komunikatów redysponowania od OSP, które nie mogły zostać przetworzone z przyczyn technicznych przez podmioty
+    messages:
+      GenericFailureMessage:
+        $ref: '#/components/messages/GenericFailure'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: validation
+          type: topic
+        bindingVersion: '0.3.0'
+
+  redispatch.failure.{entityId}:
+    address: redispatch.failure.{entityId}
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał typu DLQ dla komunikatów redysponowania od podmiotów, które nie mogły zostać przetworzone z przyczyn technicznych przez OSP
+    messages:
+      GenericFailureMessage:
+        $ref: '#/components/messages/GenericFailure'
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          name: redispatch.failure.{entityId}
+          durable: true
+          exclusive: false
+          autoDelete: false
+        bindingVersion: '0.3.0'
+
+operations:
+  receiveRedispatchOrder:
+    title: Odebranie przez podmiot polecenia redysponowania 
+    action: receive
+    channel:
+      $ref: '#/channels/redispatch.order.{entityId}'
+    summary: Odebranie przez podmiot polecenia redysponowania 
+    messages:
+      - $ref: '#/channels/redispatch.order.{entityId}/messages/RedispatchOrderMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+
+  sendRedispatchAcknowledgement:
+    title: Wysłanie przez podmiot potwierdzenia na polecenie redysponowania
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.acknowledgement'
+    summary: Wysłanie przez podmiot potwierdzenia  na polecenie redysponowania
+    messages:
+      - $ref: '#/channels/redispatch.acknowledgement/messages/RedispatchAcknowledgementMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+
+  receiveRedispatchInformation:
+    title: Odebranie przez podmiot informacji o redysponowaniu
+    action: receive
+    channel:
+      $ref: '#/channels/redispatch.information.{entityId}'
+    summary: Odebranie przez podmiot informacji o redysponowaniu
+    messages:
+      - $ref: '#/channels/redispatch.information.{entityId}/messages/RedispatchInformationMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+
+  sendGenericFailureMessage:
+    title: Wysłanie przez podmiot informacji o błędnym komunikacie z OSP
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.failed'
+    summary: Wysłanie przez podmiot informacji o błędnym komunikacie z OSP
+    messages:
+      - $ref: '#/channels/redispatch.failed/messages/GenericFailureMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+
+  receiveGenericFailureMessage:
+    title: Odebranie przez podmiot informacji o błednym komunikacie z podmiotu
+    action: receive
+    channel:
+      $ref: '#/channels/redispatch.failure.{entityId}'
+    summary: Odebranie przez podmiot informacji o błednym komunikacie z podmiotu
+    messages:
+      - $ref: '#/channels/redispatch.failed/messages/GenericFailureMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+
+components:
+  messages:
+    RedispatchOrder:
+      name: Polecenie redysponowania
+      title: Polecenie redysponowania
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RedispatchOrder'
+      correlationId:
+        description: Korelacja na podstawie tsoMsgId z nagłówka.
+        location: $message.payload#/header/tsoMsgId
+
+    RedispatchAcknowledgement:
+      name: Potwierdzenie do wydanego polecenie redysponowania
+      title: Potwierdzenie do wydanego polecenie redysponowania
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RedispatchAcknowledgement'
+      correlationId:
+        description: Korelacja na podstawie tsoMsgId z nagłówka.
+        location: $message.header#/tsoMsgId
+
+    RedispatchInformation:
+      name: Informacja o redysponowaniu
+      title: Informacja o redysponowaniu
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RedispatchInformation'
+      correlationId:
+        description: Korelacja na podstawie tsoMsgId z nagłówka.
+        location: $message.payload#/header/tsoMsgId
+
+    GenericFailure:
+      name: Komunikat o błędzie przetwarzania
+      title: Komunikat o błędzie przetwarzania
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GenericFailure'
+      correlationId:
+        description: Korelacja na podstawie tsoMsgId lub entityMsgId z nagłówka.
+        location: $message.payload#/refMsgId
+
+  schemas:
+    BaseHeader:
+      type: object
+      additionalProperties: false
+      required:
+        - tsoMsgId
+        - creationDateTime
+        - stdVersion
+      properties:
+        tsoMsgId:
+          type: string
+          description: "identyfikator komunikatu nadawany przez OSP"
+          format: uuid
+          examples:
+            - d0443a92-f807-45f0-867e-70cf5321dec7
+        creationDateTime:
+          type: string
+          format: date-time
+          description: "Data utworzenia komunikatu. Data i czas w formacie YYYY-MM-DDThh:mm:ss, podawana w czasie UTC "
+          pattern: 'Z$'
+          examples:
+            - 2002-09-24T12:21:47Z
+        stdVersion:
+          type: string
+          description: "Wersja standardów B2B"
+          minLength: 3
+          maxLength: 3
+
+    RedispatchOrder:
+      type: object
+      additionalProperties: false
+      required:
+        - header
+        - redispatchOrderPeriod
+        - redispatchOrder
+      properties:
+        header:
+          allOf:
+            - $ref: '#/components/schemas/BaseHeader'
+            - type: object
+              required:
+                - entityId
+                - type
+                - redispatchOrderCode
+                - redispatchOrderReason
+              properties:
+                entityId:
+                  type: string
+                  description: "Identyfikator podmiotu (OSDp, Wytwórcy przyłączonego do Sieci Przesyłowej), który odpowiada za realizację polecenia redysponowania. Identyfikator zgodny z bazą Partnerów Biznesowych PSE."
+                  minLength: 5
+                  maxLength: 5
+                type:
+                  type: string
+                  description: "Typ komunikatu. Dopuszczalna wartość  to PNR - polecenie redysponowania."
+                  enum: [ PNR ]
+                redispatchOrderCode:
+                  type: string
+                  description: "Biznesowy kod polecenia redysponowania"
+                  minLength: 20
+                  maxLength: 20
+                  examples:
+                    - 1/I/22.07.2025
+                redispatchOrderReason:
+                  type: string
+                  description: "Cel wydania polecenia redysponowania. Dopuszczalne wartości to B - polecenie bilansowe, S - polecenie sieciowe."
+                  enum: [B, S]
+        redispatchOrderPeriod:
+          $ref: '#/components/schemas/RedispatchOrderPeriod'
+        redispatchOrders:
+          type: array
+          minItems: 1
+          description: "Dane wydanego polecenia redysponowania"
+          items:
+            $ref: '#/components/schemas/RedispatchOrderItem'
+
+    RedispatchInformation:
+      type: object
+      additionalProperties: false
+      required:
+        - header
+        - redispatchOrderPeriod
+        - redispatchOrder
+      properties:
+        header:
+          allOf:
+            - $ref: '#/components/schemas/BaseHeader'
+            - type: object
+              required:
+                - entityId
+                - type
+                - redispatchOrderCode
+                - redispatchOrderReason
+              properties:
+                entityId:
+                  type: string
+                  description: Identyfikator podmiotu (Wytwórcy przyłączonego do Sieci Przesyłowej), który odpowiada za realizację polecenia redysponowania
+                  minLength: 5
+                  maxLength: 5
+                type:
+                  type: string
+                  description: "Typ komunikatu. Dopuszczalna wartość słownikowa to INR - informacja o wydaniu polecenia redysponowania."
+                  enum: [ INR ]
+                redispatchOrderCode:
+                  type: string
+                  description: "Biznesowy kod polecenia redysponowania"
+                  minLength: 20
+                  maxLength: 20
+                  examples:
+                    - 1/I/22.07.2025
+                redispatchOrderReason:
+                  type: string
+                  description: "Cel wydania polecenia redysponowania. Dopuszczalne wartości to B - polecenie bilansowe, S - polecenie sieciowe."
+                  enum: [B, S]
+        redispatchOrderPeriod:
+          $ref: '#/components/schemas/RedispatchOrderPeriod'
+        redispatchOrders:
+          type: array
+          minItems: 1
+          description: "Dane wydanego polecenia redysponowania"
+          items:
+            $ref: '#/components/schemas/RedispatchOrderItem'
+
+    RedispatchOrderItem:
+      type: object
+      additionalProperties: false
+      required:
+        - redispatchingObjectMrid
+        - measurementUnit
+        - curveType
+        - seriesPeriods
+      properties:
+        redispatchingObjectMrid:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"
+          examples:
+            - 5da114ac-a3ef-450d-a9db-d2208eb0ccc0
+        measurementUnit:
+          type: string
+          description: "Jednostka danych. Dopuszczalna wartość to MAW - megawaty"
+          enum: [ MAW ]
+          minLength: 3
+          maxLength: 3
+        curveType:
+          type: string
+          description: "Typ krzywej. Określa sposób interpretacji wartości w podanych pozycjach. Dopuszczalna wartość to A01 - kolejne odcinki czasu; występują wszystkie punkty wg zadanej rozdzielczości."
+          enum: [ A01 ]
+          minLength: 3
+          maxLength: 3
+        seriesPeriods:
+          type: array
+          minItems: 1
+          description: "Serie danych w punktach czasowych"
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - direction
+              - autogenerationRedispatch
+              - resolution
+              - timeInterval
+              - seriesPoints
+            properties:
+              direction:
+                type: string
+                description: "Kierunek, którego dotyczy polecenie redysponowania. Dopuszczalne wartości to G - generacja, P - pobór"
+                enum: [ G, P ]
+              autogenerationRedispatch:
+                type: string
+                description: "Znacznik ograniczenia autogeneracji. Określa czy ograniczana jest moc generacji łącznie z mocą wytwarzaną na własne potrzeby i niewprowadzaną do sieci. Dotyczy tylko obiektów ze znacznikiem autogeneracja. Dla pozostałych zawsze wartość 0."
+                enum: [ '0', '1' ]
+              resolution:
+                type: string
+                description: "Rozdzielczość (ziarno). Dopuszczalne wartości to P1D - doba, PT60M - godzina, PT15M - kwadrans"
+                enum: [ P1D, PT60M, PT15M ]
+              timeInterval:
+                type: object
+                description: "Podokres danych wydanego polecenia redysponowania"
+                additionalProperties: false
+                required: [ startDt, endDt ]
+                properties:
+                  startDt:
+                    type: string
+                    format: date-time
+                    description: "Początek podokresu. Data i czas w formacie YYYY-MM-DDThh:mm:ss. Podawana w UTC z dokładnością do pełnych 15 minut (sekundy zostaną pominięte)"
+                    pattern: 'Z$'
+                    examples:
+                      - 2023-09-24T12:00:00Z
+                  endDt:
+                    type: string
+                    format: date-time
+                    description: "Koniec podokresu. Data i czas w formacie YYYY-MM-DDThh:mm:ss. Podawana w UTC z dokładnością do pełnych 15 minut (sekundy zostaną pominięte)"
+                    pattern: 'Z$'
+                    examples:
+                      - 2023-09-24T14:30:00Z
+              seriesPoints:
+                type: array
+                items:
+                  type: object
+                  description: "Dane w punktach czasowych"
+                  additionalProperties: false
+                  required: [ position, quantityMax, quantityMin ]
+                  properties:
+                    position:
+                      type: integer
+                      description: "Numer pozycji czasowej w odniesieniu do początku podokresu z uwzględnieniem podanej rozdzielczości"
+                      minimum: 0
+                      maximum: 999999
+                    quantityMax:
+                      type: number
+                      description: "Wartość maksymalna ze względu na polecenie redysponowania"
+                      minimum: 0
+                      maximum: 99999.999
+                      multipleOf: 0.001
+                    quantityMin:
+                      type: number
+                      description: "Wartość minimalna ze względu na polecenie redysponowania"
+                      minimum: 0
+                      maximum: 99999.999
+                      multipleOf: 0.001
+
+    RedispatchOrderPeriod:
+      type: object
+      additionalProperties: false
+      description: "Okres wydanego polecenia redysponowania"
+      required: [ startDt, endDt ]
+      properties:
+        startDt:
+          type: string
+          format: date-time
+          description: "Początek okresu. Data i czas w formacie YYYY-MM-DDThh:mm:ss. Podawana w UTC z dokładnością do pełnych 15 minut (sekundy zostaną pominięte)"
+          pattern: 'Z$'
+          examples:
+            - 2023-09-24T12:00:00Z
+        endDt:
+          type: string
+          format: date-time
+          description: "Koniec okresu. Data i czas w formacie YYYY-MM-DDThh:mm:ss. Podawana w UTC z dokładnością do pełnych 15 minut (sekundy zostaną pominięte)"
+          pattern: 'Z$'
+          examples:
+            - 2023-09-24T14:30:00Z
+
+    RedispatchAcknowledgement:
+      type: object
+      description: "Odpowiedź na wydane polecenie redysponowania. Spodziewane są 2 dopowiedzi - najpierw RECEIVED a potem ACCEPTED/REJECTED "
+      required:
+        - header
+        - acknowledgement
+      properties:
+        header:
+          allOf:
+            - $ref: '#/components/schemas/BaseHeader'
+            - type: object
+              required:
+                - entityId
+                - entityMsgId
+                - redispatchOrderCode
+              properties:
+                entityId:
+                  type: string
+                  description: "Identyfikator podmiotu (OSDp), który odpowiada na wydane polecenie redysponowania. Identyfikator zgodny z bazą Partnerów Biznesowych PSE"
+                  minLength: 5
+                  maxLength: 5
+                entityMsgId:
+                  type: string
+                  description: "Identyfikator komunikatu nadany przez nadawcę. Nadawca zapewnia jego unikalność"
+                  format: uuid
+                  examples:
+                    - d0443a92-f807-45f0-867e-70cf5321dec7
+                redispatchOrderCode:
+                  type: string
+                  description: "Biznesowy kod polecenia redysponowania"
+                  minLength: 20
+                  maxLength: 20
+                  examples:
+                    - 1/I/22.07.2025
+        acknowledgement:
+          type: object
+          description: "Odpowiedź podmiotu na polecenie redysponowania"
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              description: "Decyzja o realizacji wydanego polecenia redysponowania. Dopuszczalne wartości to RECEIVED - odebrano polecenia, ACCEPTED - potwierdzenie przyjęcia do realizacji polecenia redysponowania, REJECTED - informacja o odrzuceniu polecenia redysponowania."
+              enum: [ RECEIVED, ACCEPTED, REJECTED ]
+            reason:
+              description: "Opis (krótki komentarz opisujący decyzję o realizacji polecenia redysponowania lub o odrzuceniu polecenia)"
+              type: string
+              maxLength: 512
+    GenericFailure:
+      type: object
+      description: Generyczny komunikat o błędzie przetwarzania
+      required:
+        - header
+      properties:
+        header:
+          additionalProperties: false
+          required:
+            - entityId
+            - refMsgId
+            - creationDateTime
+          properties:
+            entityId:
+              type: string
+              description: Identyfikator podmiotu, u którego wystąpił błąd przetwarzania
+              minLength: 5
+              maxLength: 5
+            refMsgId:
+              type: string
+              description: Identyfikator komunikatu, który spowodował błąd
+              format: uuid
+              examples:
+                - d0443a92-f807-45f0-867e-70cf5321dec7
+            creationDateTime:
+              type: string
+              format: date-time
+              description: "Data utworzenia komunikatu. Data i czas w formacie YYYY-MM-DDThh:mm:ss"
+              pattern: 'Z$'
+              examples:
+                - 2002-09-24T12:21:47Z
+        failureDetails:
+          type: object 
+          properties:          
+            failureDateTime:
+                type: string
+                format: date-time
+                description: "Data i czas w błędu przetwarzania"
+                pattern: 'Z$'
+                examples:
+                  - 2002-09-24T12:21:47Z          
+            failureDescription:
+                type: string
+                description: "Opis błedu"
+            failedContent:
+                type: object
+                description: "Treść komunikatu, które spowodował błąd"
+                additionalProperties: true
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: OAuth2 dla publikacji komunikatów
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/oauth2/token
+          refreshUrl: https://auth.example.com/oauth2/refresh
+          availableScopes:
+            "rabbitmq.read:*/redispatch/redispatch.order.{sub}": "Uprawnienie do odbioru komunikatów polecenia redysponowania z dedykowanej kolejki"
+            "rabbitmq.write:*/redispatch/redispatch.acknowledgement": "Uprawnienie pozwala wysyłać odpowiedź na wydane polecenie redysponowania."
+            "rabbitmq.read:*/redispatch/redispatch.information.{sub}": "Uprawnienie do odbioru informacji o poleceniu redysponowania z dedykowanej kolejki"
+            "rabbitmq.write:*/redispatch/failure": "Uprawnienie pozwala wysyłać błędy spowodowane komunikatami OSP polecenie redysponowania."
+            "rabbitmq.read:*/redispatch/failure.{sub}": "Uprawnienie pozwala wysyłać odpowiedź na wydane polecenie redysponowania."            
+            
