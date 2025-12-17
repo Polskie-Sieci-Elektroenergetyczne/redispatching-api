@@ -122,6 +122,137 @@ channels:
           exclusive: false
           autoDelete: false
         bindingVersion: '0.3.0'
+                     
+  redispatch.dsoredispatches:
+    address: redispatch.dsoredispatches    
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do wysyłania informacji o wydanych przez OSD poleceniach redysponowania w związku z wydanymi przez OSP poleceniami redysponowania    
+    messages:      
+      PsdiRedispatchRealizationMessage:
+        $ref: '#/components/messages/PsdiRedispatchRealizationMessageDto'    
+    bindings:
+      amqp:        
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: psdi
+          type: topic
+        bindingVersion: '0.3.0'      
+  
+  redispatch.request-status.{entityId}:
+    address: redispatch.request-status.{entityId}
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do odbioru potwierdzenia przetworzenia informacji przekazanych kanałem B2B
+    messages:
+      PsdiRequestStatusMessage:
+        $ref: '#/components/messages/PsdiRedispatchRealizationResultDto'
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          name: redispatch.request-status.{entityId}
+          durable: true
+          exclusive: false
+          autoDelete: false
+        bindingVersion: '0.3.0'
+  
+  redispatch.networkcontraints:      
+    address: redispatch.networkcontraints    
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do wysyłania informacji o ograniczeniach w sieci OSD niezwiązanych z wydanym poleceniem OSP
+    messages:      
+      PsdiRestrictionsMessage:
+        $ref: '#/components/messages/PsdiRestrictionsMessageDto'    
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: psdi
+          type: topic
+        bindingVersion: '0.3.0'
+        
+  redispatch.generatedenergywithsupport:      
+    address: redispatch.generatedenergywithsupport
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do wysyłania informacji o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
+    messages:      
+      PsdiEWykCertMessage:
+        $ref: '#/components/messages/PsdiEwykCertMessageDto'    
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: psdi
+          type: topic
+        bindingVersion: '0.3.0'
+  
+  redispatch.auctionsupportrequest:
+    address: redispatch.auctionsupportrequest
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do wysyłania do OSP informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
+    messages:      
+      PsdiUOzeMessage:
+        $ref: '#/components/messages/PsdiUOzeMessageDto'    
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: psdi
+          type: topic
+        bindingVersion: '0.3.0'
+        
+  redispatch.auctionsupportrequest.{entityId}:
+    address: redispatch.auctionsupportrequest.{entityId}
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do wysyłania do OSD informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy poza aplikacją WOZE po wydanym poleceniu przez OSP
+    messages:      
+      PsdiUOzeMessage:
+        $ref: '#/components/messages/PsdiUOzeMessageDto'    
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          name: redispatch.auctionsupportrequest.{entityId}
+          durable: true
+          exclusive: false
+          autoDelete: false
+        bindingVersion: '0.3.0'    
+        
+  redispatch.responsiblesubjectforgenerator:
+    address: redispatch.responsiblesubjectforgenerator
+    servers:
+      - $ref: '#/servers/amqp-cluster'
+    description: Kanał do przekazania do OSP informacji o zmianie przypisania POB do pojedynczego MWE
+    messages:      
+      PsdiPOBMessage:
+        $ref: '#/components/messages/PsdiPOBMessageDto'    
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          vhost: /
+          autoDelete: false
+          durable: true
+          name: psdi
+          type: topic
+        bindingVersion: '0.3.0'      
 
 operations:
   receiveRedispatchOrder:
@@ -177,6 +308,83 @@ operations:
     messages:
       - $ref: '#/channels/redispatch.failed/messages/GenericFailureMessage'
     security:
+      - $ref: '#/components/securitySchemes/oauth2'   
+      
+  sendDSORedispatches:
+    title: Operacja wysłania informacji o wydanych przez OSD poleceniach redysponowania na skutek polecenia OSP
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.dsoredispatches'
+    summary: Nadanie komunikatu z informacją o wydanych poleceniach redysponowania
+    messages:
+      - $ref: '#/channels/redispatch.dsoredispatches/messages/PsdiRedispatchRealizationMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'      
+      
+  receiveRequest-status:
+    title: Operacja odbioru potwierdzenia przetworzenia informacji przesłanych do OSP
+    action: receive
+    channel:
+      $ref: '#/channels/redispatch.request-status.{entityId}'
+    summary: Odebranie komunikatu potwierdzenia  przetworzenia informacji przesłanych do OSP
+    messages:
+      - $ref: '#/channels/redispatch.request-status.{entityId}/messages/PsdiRequestStatusMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'    
+  
+  sendDispatchNetworkContraints:
+    title: Operacja wysłania informacji o ograniczeniach w sieci OSD niewydanych przez OSD poleceniach redysponowania na skutek polecenia OSP
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.networkcontraints'
+    summary: Nadanie komunikatu z informacją o wydanych poleceniach redysponowania
+    messages:
+      - $ref: '#/channels/redispatch.networkcontraints/messages/PsdiRestrictionsMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'  
+      
+  sendGeneratedEnergyWithSupport:
+    title: Operacja wysłania informacji o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.generatedenergywithsupport'
+    summary: Nadanie komunikatu z informacją o E_wyk_cert
+    messages:
+      - $ref: '#/channels/redispatch.generatedenergywithsupport/messages/PsdiEWykCertMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+      
+  sendAuctionSupportRequest:
+    title: Operacja wysłania informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, które złożyli Wytwórcy poza aplikacją WOZE po wydanym poleceniu przez OSP
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.auctionsupportrequest'
+    summary: Nadanie komunikatu z informacją o zgłoszeniach uOze
+    messages:
+      - $ref: '#/channels/redispatch.auctionsupportrequest/messages/PsdiUOzeMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'    
+      
+  receiveAuctionSupportRequest:
+    title: Operacja pobrania informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
+    action: receive
+    channel:
+      $ref: '#/channels/redispatch.auctionsupportrequest.{entityId}'
+    summary: Pobranie komunikatu z informacją o zgłoszeniach uOze
+    messages:
+      - $ref: '#/channels/redispatch.auctionsupportrequest.{entityId}/messages/PsdiUOzeMessage'
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+      
+  sendResponsibleSubjectForGenerator:
+    title: Operacja wysłania informacji o zmianie przypisania POB do pojedynczego MWE
+    action: send
+    channel:
+      $ref: '#/channels/redispatch.responsiblesubjectforgenerator'
+    summary: Nadanie komunikatu z informacją o zgłoszeniach uOze
+    messages:
+      - $ref: '#/channels/redispatch.responsiblesubjectforgenerator/messages/PsdiPOBMessage'
+    security:
       - $ref: '#/components/securitySchemes/oauth2'
 
 components:
@@ -220,6 +428,98 @@ components:
       correlationId:
         description: Korelacja na podstawie tsoMsgId lub entityMsgId z nagłówka.
         location: $message.payload#/refMsgId
+    
+    PsdiRedispatchDto:
+      name: Informacja o wydanych poleceniach redysponowania
+      title: Informacja o wydanych poleceniach redysponowania
+      contentType: application/json      
+      payload:
+        type: array
+        items: 
+          $ref: '#/components/schemas/PsdiRedispatchDto'      
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.header#/serverMsqId  
+
+    PsdiRedispatchRealizationMessageDto:
+      name: Informacja o wydanych poleceniach redysponowania
+      title: Informacja o wydanych poleceniach redysponowania
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+      payload:
+        type: array
+        items: 
+          $ref: '#/components/schemas/PsdiRedispatchRealizationDto'      
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.header#/serverMsqId
+
+    PsdiUOzeMessageDto:
+      name: Informacja o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
+      title: Informacja o zgłoszeniach uOze
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+      payload:
+        type: array
+        items: 
+          $ref: '#/components/schemas/PsdiUOzeDto'      
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.header#/serverMsqId
+
+    PsdiPOBMessageDto:
+      name: Informacja  o zmianie przypisania POB do pojedynczego MWE
+      title: Informacja o POB
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+      payload:
+        type: array
+        items: 
+          $ref: '#/components/schemas/PsdiPOBDto'      
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.header#/serverMsqId
+
+    PsdiEwykCertMessageDto:
+      name: Informacja o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
+      title: Informacja o E_wyk_cert
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+      payload:
+        type: array
+        items: 
+          $ref: '#/components/schemas/PsdiEWykCertDto'      
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.header#/serverMsqId
+
+    PsdiRestrictionsMessageDto:
+      name: Informacja o ograniczeniach w sieci OSD nie związanych z wydanym przez OSP poleceniem redysponowania
+      title: Informacja o ograniczeniach w sieci OSD
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/PsdiRedispatchHeaderDto'      
+      payload:
+        type: array
+        items: 
+          $ref: '#/components/schemas/PsdiRestrictionsDto'      
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.header#/serverMsqId
+
+    PsdiRedispatchRealizationResultDto:
+      name: Informacja o przetworzeniu informacji o wydanym przez OSD pocelceniu redysponowania
+      title: Informacja o przetworzeniu informacji o wydanym przez OSD pocelceniu redysponowania
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PsdiMessageResultDto'
+      correlationId:
+        description: Korelacja na podstawie serverMsqId z nagłówka.
+        location: $message.payload#/serverMsqId
 
   schemas:
     BaseHeader:
@@ -559,6 +859,383 @@ components:
                 type: object
                 description: "Treść komunikatu, które spowodował błąd"
                 additionalProperties: true
+    
+    PsdiRedispatchHeaderDto:
+      type: object
+      additionalProperties: false
+      required:
+        - clientId
+        - severMsgId
+        - type
+        - creationDateTime
+        - stdVersion
+      properties:
+        clientId:
+          type: string
+          description: "Identyfikator podmiotu (OSDp, Wytwórcy przyłączonego do Sieci Przesyłowej), który odpowiada za realizację polecenia redysponowania. Identyfikator zgodny z bazą Partnerów Biznesowych PSE."
+          minLength: 5
+          maxLength: 5
+        severMsgId:
+          type: string
+          description: "Identyfikator komunikatu nadawcy"
+          format: uuid
+          examples:
+            - d0443a92-f807-45f0-867e-70cf5321dec7        
+        creationDateTime:
+          type: string
+          format: date-time
+          description: "Data utworzenia komunikatu. Data i czas w formacie YYYY-MM-DDThh:mm:ss"
+          pattern: 'Z$'
+          examples:
+            - 2002-09-24T12:21:47Z
+        stdVersion:
+          type: string
+          description: "Wersja standardów B2B"
+          minLength: 3
+          maxLength: 3
+     
+    PsdiMessageResultDto:
+      type: object
+      additionalProperties: false
+      required:
+        - header
+        - status
+      properties:
+        header:
+          $ref: '#/components/schemas/PsdiRedispatchHeaderDto'
+        status:
+          type: string
+          enum:
+            - APPROVED
+            - REJECTED
+        validation:
+          type: array
+          items: 
+            type: object
+            properties:
+              severity:
+                type: string
+                description: Stopień naruszenia walidacji powstałego w czasie przetwarzania
+                enum:
+                  - INFO
+                  - WARN
+                  - ERROR
+                example: WARN
+              code:
+                type: string
+                description: Kod naruszenia walidacji powstałego w czasie przetwarzania
+                maxLength: 10
+                example: 
+              field:
+                type: string
+                description: wskazanie na element w zgłoszeniu
+                example: 
+              message:
+                type: string
+                description: Opis naruszenia walidacji powstałego w czasie przetwarzania
+                example:     
+
+    PsdiRedispatchDto:
+      type: object
+      description: "Komunikat informujący o wydanym przez OSP poleceniu redysponowania"
+      required:
+        - mRID
+        - redispatchTable
+      properties:
+        mRID:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"  
+        redispatchTable:
+          type: array
+          items: 
+            $ref: '#/components/schemas/PsdiRedispatchTableDto'
+
+    PsdiRedispatchRealizationDto:
+      type: object
+      description: "Komunikat informujący o wydanym przez OSD poleceniu redysponowania"
+      required:
+        - mRID
+        - redispatchDate
+      properties:
+        mRID:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"
+        redispatchDate:
+          type: string
+          format: date
+          description: "Doba redysponowania w formacie YYYY-MM-DD"
+          pattern: 'Z$'
+          examples:
+            - 2025-11-02
+        redispatchDetail:
+          type: array
+          items: 
+            $ref: '#/components/schemas/PsdiRedispatchRealizationTableDto'
+
+    PsdiUOzeDto:
+      type: object
+      description: "Komunikat informujący o Przekazanie informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP"
+      required:
+        - mRID
+        - redispatchDate
+      properties:
+        mRID:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"
+        redispatchDate:
+          type: string
+          format: date
+          description: "Doba redysponowania w formacie YYYY-MM-DD"
+          pattern: 'Z$'
+          examples:
+            - 2025-11-02
+        notificationDate:
+          type: string
+          format: date
+          description: "Data kiedy OSD został poinformowany o tym czy i jaka część zredukowanej energii powinna zostać rozliczona w danym systemie wsparcia YYYY-MM-DD"
+          pattern: 'Z$'
+          examples:
+            - 2025-11-03
+        supportingSystem:
+          type: string
+          description: "Systemie wsparcia w jakim powinna zostać rozliczona energia"
+          enum:
+            - auction
+            - greenCertificate
+        energy:
+          type: integer
+          description: "% zredukowanej energii, która powinna zostać rozliczona w danym systemie wsparcia (art. 93 ust. 18 ustawy o odnawialnych źródłach energii (Dz.U.2023.1436))"
+        ipaNumber:
+          type: string
+          description: "numer IPA, którego dotyczy system wsparcia"
+
+    PsdiPOBDto:
+      type: object
+      description: "Komunikat informujący o zmianie przypisania POB do pojedynczego MWE"
+      required:
+        - mRID
+        - redispatchDate
+      properties:
+        mRID:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"
+        pobName:
+          type: string          
+          description: "Nazwa podmiotu odpowiedzialnego za bilansowanie"
+          maxLength: 256
+        pobNIP:
+          type: string          
+          description: "NIP podmiotu odpowiedzialnego za bilansowanie"
+          maxLength: 10
+          examples:
+            - '1234567890'
+        pobDate:
+          type: string
+          format: date
+          description: "Data od kiedy POB pełni funkcję dla MWE YYYY-MM-DD"
+          pattern: 'Z$'
+          examples:
+            - 2025-11-02        
+
+    PsdiEWykCertDto:
+      type: object
+      description: "Komunikat informujący o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP"
+      required:
+        - mRID
+        - redispatchDate
+      properties:
+        mRID:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"
+        redispatchDate:
+          type: string
+          format: date
+          description: "Doba redysponowania w formacie YYYY-MM-DD"
+          pattern: 'Z$'
+          examples:
+            - 2025-11-02
+        eWykCertTable:
+          type: array
+          items: 
+            $ref: '#/components/schemas/PsdiEWykCertTableDto'
+        eWykCertTableTimeChange:
+          type: array
+          description: "Wartości e-wyk-cert dla dodatkowej godziny przy zmianie czasu dla godzin 2:15, 2:30, 2:45, 3:00"
+          items: 
+            $ref: '#/components/schemas/PsdiEWykCertTableDto'
+
+    PsdiRestrictionsDto:
+      type: object
+      description: "Komunikat informujący o ograniczeniach w sieci OSD nie będących efektem wydanego przez OSP polecenia redysponowania"
+      required:
+        - mRID
+        - redispatchDate
+      properties:
+        mRID:
+          type: string
+          format: uuid
+          description: "mRID obiektu redysponowania"
+        redispatchDate:
+          type: string
+          format: date
+          description: "Doba redysponowania w formacie YYYY-MM-DD"
+          pattern: 'Z$'
+          examples:
+            - 2025-11-02
+        redispatchTable:
+          type: array
+          items: 
+            $ref: '#/components/schemas/PsdiRestrictionTableDto'
+        redispatchTableTimeChange:
+          type: array
+          description: "Wartości P_zad_osd dla dodatkowej godziny przy zmianie czasu dla godzin 2:15, 2:30, 2:45, 3:00"
+          items: 
+            $ref: '#/components/schemas/PsdiRestrictionTableDto'
+
+    PsdiRedispatchTableDto:
+      type: object
+      description: "Tabela przedziałów czasowych polecenia redysponowania"
+      properties:
+        seriesPeriod:
+          type: array
+          minItems: 1
+          description: "Serie danych w punktach czasowych"
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - resolution
+              - timeInterval
+              - seriesPoints
+            properties:
+              resolution:
+                type: string
+                description: "Rozdzielczość (ziarno)"
+                enum: [PT15M]
+              timeInterval:
+                type: object
+                description: "Podokres danych wydanego polecenia redysponowania"
+                additionalProperties: false
+                required: [start, end]
+                properties:
+                  start:
+                    type: string
+                    format: date-time
+                    description: "Początek podokresu. Data i czas w formacie YYYY-MM-DDThh:mm:ss"
+                    pattern: 'Z$'
+                    examples:
+                          - 2023-09-24T12:00:00Z
+                  end:
+                    type: string
+                    format: date-time
+                    description: "Koniec podokresu. Data i czas w formacie YYYY-MM-DDThh:mm:ss"
+                    pattern: 'Z$'
+                    examples:
+                          - 2023-09-24T14:30:00Z
+              seriesPoints:
+                type: array                    
+                description: "Dane w punktach czasowych"
+                additionalProperties: false
+                items:
+                  type: object
+                  required: [position, pZad, redispatchType]
+                  properties:
+                    position:
+                      type: integer
+                      description: "Pozycja"
+                      minimum: 0
+                      maximum: 999999
+                    pZad:
+                      type: number
+                      description: "Zadany przez OSP maksymalny poziom dopuszczalenej generacji mocy czynnej w miejscu przyłączenia instalacji fotowoltaicznej do sieci OSD, wyrażony w kW z dokładnością do 1 kW"
+                      minimum: 0
+                      maximum: 999999
+                      multipleOf: 1
+                    redispatchType:
+                      type: string
+                      description: "Typ polecenia, B - bilansowe, S - sieciowe"
+                      enum:
+                          - B
+                          - S
+                      example: "B"
+
+    PsdiRedispatchRealizationTableDto:
+      type: object
+      description: "Tabela przedziałów czasowych polecenia redysponowania"
+      required:
+        - redispatchTimeBegin
+        - redispatchTimeEnd
+        - pZad
+        - redispatchType
+      properties:
+        redispatchTimeBegin:
+          type: string
+          format: date-time
+          description: "Czas rozpoczęcia redyspozycji w formacie YYYY-MM-DDThh:mm:ss"
+          pattern: 'Z$'
+          example: "2019-08-24T14:15:22Z"
+        redispatchTimeEnd:
+          type: string
+          format: date-time
+          description: "Czas zakończenia redyspozycji w formacie YYYY-MM-DDThh:mm:ss"
+          pattern: 'Z$'
+          example: "2019-08-24T14:15:22Z"
+        pZad:
+          type: number
+          format: float
+          description: Wartość zadanej mocy (P_zad) w MW.
+          example: 0
+        redispatchType:
+          type: string
+          description: Typ redyspozycji (np. bilansowe, awaryjne).
+          enum:
+            - bilansowe
+            - awaryjne
+          example: "bilansowe"  
+
+    PsdiEWykCertTableDto:
+      type: object
+      description: "Tabela przedziałów czasowych e-wyk-cert"
+      required:
+        - dateTimeEnd        
+        - pZad        
+      properties:        
+        dateTimeEnd:
+          type: string
+          format: date-time
+          description: "Koniec 15 minutowego przedziału"
+          pattern: 'Z$'
+          example: "2019-08-24T14:15:00"
+        eWykCert:
+          type: number
+          format: float
+          description: "Wolumenie energii wyprodukowanej przez instalację wiatrową w przedziale czasowym t, zmierzony na zaciskach generatorów turbin wiatrowych, wyrażony z kWh z dokładnością do 2 miejsc po przecinku. W zależności od dokładności urządzeń pomiarowych do przedziału t oznaczonego 00:15:00 może zostać zakwalifikowany pomiar od 00:00:01 do 00:15:00 albo od 00:00:01 do 00:14:59 albo inny obejmujący w maksymalnym zakresie ten przedział"
+          example: 12.22
+
+    PsdiRestrictionTableDto:    
+      type: object
+      description: "Tabela przedziałów czasowych polecenia redysponowania"
+      required:
+        - dateTimeEnd        
+        - pZad        
+      properties:        
+        dateTimeEnd:
+          type: string
+          format: date-time
+          description: "Koniec 15 minutowego przedziału"
+          pattern: 'Z$'
+          example: "2019-08-24T14:15:00"
+        pZad:
+          type: number
+          format: float
+          description: "Maksymalny poziom generacji mocy czynnej instalacji fotowoltaicznej zdeterminowany przyczynami innymi niż wydane przez OSP polecenie Redysponowania Nierynkowego, w poszczególnych przedziałach czasowych, wyrażony w kW z dokładnością do 1 kW"
+          example: 0
+    
   securitySchemes:
     oauth2:
       type: oauth2
