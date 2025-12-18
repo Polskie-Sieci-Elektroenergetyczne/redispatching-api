@@ -26,7 +26,7 @@ Informacje biznesowe w kanale PSDI są przekazywane w postaci komunikatów. Komu
 | Rodzaj informacji | Nadawca | Odbiorca | Komunikat |
 |-----------| :---------: | :---------: |-----------|
 | Polecenie redysponowania | OSP | OSDp, Wytwórca przyłączony do sieci OSP| [Polecenie redysponowania](komunikat%20polecenia%20redysponowania.md?ref_type=heads) |
-| Odpowiedź o na wydane polecenie redysponowania | OSDp | OSP | [Odpowiedź na wydane polecenie](komunikat%20odpowiedzi%20o%20podjęciu%20polecenia%20redysponowania.md?ref_type=heads) |
+| Odpowiedź o na wydane polecenie redysponowania | OSDp | OSP | [Odpowiedź na wydane polecenie](komunikat%20odpowiedzi%20na%20wydane%20polecenie%20redysponowania.md?ref_type=heads) |
 | Informacja o poleceniu redysponowania | OSP | Wytwórca przyłączony do sieci OSP | [Informacja o poleceniu redysponowania](komunikat%20informacji%20o%20poleceniu%20redysponowania.md?ref_type=heads) |
 | Zapytanie o konfigurację obiektów redysponowania | OSDp | OSP | [Zapytanie o konfigurację obiektów](Komunikat%20zapytania%20o%20konfigurację%20obiektów%20redysponowania.md?ref_type=heads) |
 | Informacja o konfiguracji obiektów redysponowania | OSP | OSDp | [Informacja o konfiguracji obiektów](Komunikat%20informacji%20o%20konfiguracji%20obiektów%20redysponowania.md?ref_type=heads) |
