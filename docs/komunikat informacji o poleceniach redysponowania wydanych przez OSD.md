@@ -3,8 +3,8 @@
 ### Wykonanie przez OSD polecenia redukcji wydanej przez OSP
 #### Adres Rest API
 ```
-- POST psdi/api/v1/dsoredispatch
-- GET psdi/api/v1/dsoredispatch/status
+- POST redispatching/api/v1/dsoredispatch
+- GET redispatching/api/v1/dsoredispatch/status
 ```
 #### Nadawca
 Operator Systemu Dystrybucyjnego przyłaczony do sieci przesyłowej 
@@ -34,7 +34,7 @@ sequenceDiagram
     participant REST Client
     participant B2B REST API
     participant Backend service
-    REST Client->B2B REST API: POST psdi/api/v1/dsoredispatch	
+    REST Client->B2B REST API: POST redispatching/api/v1/dsoredispatch	
     B2B REST API->B2B REST API: createRequest()
     B2B REST API-->REST Client: RestResponse
     B2B REST API->Backend service: approveRequest()
@@ -42,7 +42,7 @@ sequenceDiagram
     Backend service-->B2B REST API: approveResult()        
     opt
       loop  
-        REST Client->B2B REST API: GET psdi/api/v1/dsoredispatch/status
+        REST Client->B2B REST API: GET redispatching/api/v1/dsoredispatch/status
         B2B REST API-->REST Client: RestStatusResponse
       end
     end  

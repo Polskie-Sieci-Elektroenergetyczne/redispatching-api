@@ -4,7 +4,7 @@
 
 #### Adres Rest API
 ```
-- GET psdi/api/v1/auctionsupportrequest
+- GET redispatching/api/v1/auctionsupportrequest
 ```
 
 #### Nadawca
@@ -35,7 +35,7 @@ sequenceDiagram
     participant REST Client
     participant B2B REST API
     participant Backend service
-    REST Client->B2B REST API: GET psdi/api/v1/auctionsupportrequest
+    REST Client->B2B REST API: GET redispatching/api/v1/auctionsupportrequest
     B2B REST API->Backend service: uOZEListRequest()
 	Backend service-->B2B REST API: uOZEListResult()
     B2B REST API-->REST Client: RestResponse
@@ -45,8 +45,8 @@ sequenceDiagram
 
 #### Adres Rest API
 ```
-- POST psdi/api/v1/auctionsupportrequest
-- GET psdi/api/v1/auctionsupportrequest/status
+- POST redispatching/api/v1/auctionsupportrequest
+- GET redispatching/api/v1/auctionsupportrequest/status
 ```
 
 #### Nadawca
@@ -78,7 +78,7 @@ sequenceDiagram
     participant REST Client
     participant B2B REST API
     participant Backend service
-    REST Client->B2B REST API: POST psdi/api/v1/auctionsupportrequest
+    REST Client->B2B REST API: POST redispatching/api/v1/auctionsupportrequest
     B2B REST API->B2B REST API: createRequest()
     B2B REST API-->REST Client: RestResponse
     B2B REST API->Backend service: approveRequest()
@@ -86,7 +86,7 @@ sequenceDiagram
     Backend service-->B2B REST API: approveResult()        
     opt
       loop  
-        REST Client->B2B REST API: GET psdi/api/v1/auctionsupportrequest/status
+        REST Client->B2B REST API: GET redispatching/api/v1/auctionsupportrequest/status
         B2B REST API-->REST Client: RestStatusResponse
       end
     end  

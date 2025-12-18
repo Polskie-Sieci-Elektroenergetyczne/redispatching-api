@@ -4,7 +4,7 @@
 
 #### Adres Rest API
 ```
-- GET psdi/api/v1/redispatch
+- GET redispatching/api/v1/redispatch
 ```
 
 #### Nadawca
@@ -34,7 +34,7 @@ sequenceDiagram
     participant REST Client
     participant B2B REST API
     participant Backend service
-    REST Client->B2B REST API: GET psdi/api/v1/redispatch
+    REST Client->B2B REST API: GET redispatching/api/v1/redispatch
     B2B REST API->Backend service: redispatchListRequest()
 	Backend service-->B2B REST API: redispatchListResult()
     B2B REST API-->REST Client: RestResponse
