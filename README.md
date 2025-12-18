@@ -2,8 +2,8 @@
 
 [Opis biznesowy](docs/Nierynkowe%20redysponowanie.md)  
 
-[Specyfikacja OpenApi w formacie yml](specs/redispatching-openapi.yml)
+[Specyfikacja OpenAPI w formacie yml](specs/redispatching-openapi.yml)
 
-[Specyfikacja AsyncApi w formacie yml](specs/redispatching-asyncapi.yml)  
+[Specyfikacja AsyncAPI w formacie yml](specs/redispatching-asyncapi.yml)  
 
-[Dokumentacja HTML specyfikacji](https://polskie-sieci-elektroenergetyczne.github.io/redispatching-api/)
+[Specyfikacje API - HTML](https://polskie-sieci-elektroenergetyczne.github.io/redispatching-api/)

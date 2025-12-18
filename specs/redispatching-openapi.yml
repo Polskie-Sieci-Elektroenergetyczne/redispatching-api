@@ -1,12 +1,10 @@
 openapi: '3.1.2'
 info:
-  title: API Title
-  version: '1.0'
-  license:
-    name: nazwa licencji
-    url: url do opisu licencji
+  title: API dla redysponowania
+  version: 0.0.1
 servers:
-  - url: https://b2b.pse.pl/
+- url: https://b2b.pse.pl/
+  description: B2B REST API server
 
 
 paths:
@@ -51,7 +49,7 @@ paths:
       security:
         - BearerAuth: []
 
-  /redispatching/api/v1/dsoredispatch:
+  /redispatching/api/v1/dso-redispatch:
     post:
       summary: Przekazywanie listy wydanych przez OSD poleceń redysponowania w zadanej dobie
       operationId: postDSORedispatches
@@ -76,7 +74,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security:
         - BearerAuth: []
-  /redispatching/api/v1/dsoredispatch/status:
+  /redispatching/api/v1/dso-redispatch/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD poleceń redysponowania
       operationId: getDSORedispatchesState
@@ -101,7 +99,7 @@ paths:
           description: request not found
       security:
         - BearerAuth: []
-  /redispatching/api/v1/dispatchnetworkcontraints:
+  /redispatching/api/v1/dispatch-network-contraints:
     post:
       summary: Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP
       operationId: postDispatchNetworkContraints
@@ -126,7 +124,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security:
         - BearerAuth: []
-  /redispatching/api/v1/dispatchnetworkcontraints/status:
+  /redispatching/api/v1/dispatch-network-contraints/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD wykazu poleceń redysponowania niezwiązanych z wydanym poleceniem OSP
       operationId: getDispatchNetworkContraintsState
@@ -151,7 +149,7 @@ paths:
           description: request not found
       security:
         - BearerAuth: []
-  /redispatching/api/v1/generatedenergywithsupport:
+  /redispatching/api/v1/generated-energy-with-support:
     post:
       summary: Wolumen energii Ewyk_cert
       operationId: postGeneratedEnergyWithSupport
@@ -176,9 +174,9 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security:
         - BearerAuth: []
-  /redispatching/api/v1/generatedenergywithsupport/status:
+  /redispatching/api/v1/generated-energy-with-support/status:
     get:
-      summary: Pobieranie status przetworzenia przekazanych przez OSD wartości E_WYK_CERT
+      summary: Pobieranie statusu przetworzenia przekazanych przez OSD wartości E_WYK_CERT
       operationId: getGeneratedEnergyWithSupportState
       description:
       parameters:
@@ -201,7 +199,7 @@ paths:
           description: request not found
       security:
         - BearerAuth: []
-  /redispatching/api/v1/auctionsupportrequest:
+  /redispatching/api/v1/auction-support-request:
     get:
       summary: Zgłoszenia uOZE przekazywane do OSD przez system WOZE
       operationId: getAuctionSupportRequest
@@ -251,7 +249,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security:
         - BearerAuth: []
-  /redispatching/api/v1/auctionsupportrequest/status:
+  /redispatching/api/v1/auction-support-request/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń uOZE
       operationId: getAuctionSupportRequestState
@@ -276,7 +274,7 @@ paths:
           description: request not found
       security:
         - BearerAuth: []
-  /redispatching/api/v1/responsiblesubjectforgenerator:
+  /redispatching/api/v1/responsible-subject-for-generator:
     post:
       summary: Zmiana POB dla pojedynczego MWE
       operationId: postResponsibleSubjectForGenerator
@@ -301,7 +299,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
       security:
         - BearerAuth: []
-  /redispatching/api/v1/responsiblesubjectforgenerator/status:
+  /redispatching/api/v1/responsible-subject-for-generator/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń zmiany POB dla pojedynczego MWE
       operationId: getResponsibleSubjectForGeneratorState
@@ -326,7 +324,7 @@ paths:
           description: request not found
       security:
         - BearerAuth: []
-  /redispatching/api/v1/redispatchobjects/{entityId}/configuration/{type}/{date}:
+  /redispatching/api/v1/redispatch-objects/{entityId}/configuration/{type}/{date}:
     get:
       summary: Pobranie informacji o konfiguracji obiektów redysponowania
       operationId: getRedispatchObjectsConfiguration
