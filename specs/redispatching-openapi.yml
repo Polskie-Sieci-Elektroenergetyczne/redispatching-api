@@ -2,20 +2,20 @@ openapi: '3.1.2'
 info:
   title: API Title
   version: '1.0'
-  license: 
+  license:
     name: nazwa licencji
-    url: url do opisu licencji    
+    url: url do opisu licencji
 servers:
   - url: https://b2b.pse.pl/
-            
-        
+
+
 paths:
-  /psdi/api/v1/redispatch:
+  /redispatching/api/v1/redispatch:
     get:
       summary: Pobieranie listy wydanych poleceń redysponowania dla podanej doby
       operationId: getRedispatchByDate
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: redispatchDate
           in: query
           description: Doba redysponowania
@@ -26,11 +26,11 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/redispatchOspMsg'
-        '400': 
+        '400':
           description: invalid date
           content:
             application/json:
@@ -48,40 +48,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: 
+      security:
         - BearerAuth: []
-        
-  /psdi/api/v1/dsoredispatch:
-    post: 
+
+  /redispatching/api/v1/dsoredispatch:
+    post:
       summary: Przekazywanie listy wydanych przez OSD poleceń redysponowania w zadanej dobie
       operationId: postDSORedispatches
-      description: 
-      requestBody: 
-        content: 
-          application/json: 
-            schema: 
+      description:
+      requestBody:
+        content:
+          application/json:
+            schema:
               $ref: '#/components/schemas/reductionsOsd'
-      responses: 
+      responses:
         '200':
           description: successful operation
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/response'
         '400':
           description: invalid data
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/dsoredispatch/status:
+  /redispatching/api/v1/dsoredispatch/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD poleceń redysponowania
       operationId: getDSORedispatchesState
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: requestId
           in: query
           description: Identyfikator przesłanych danych
@@ -91,47 +91,47 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/processingStatusResponse'
-        '400': 
+        '400':
           description: invalid request Id
         '404':
           description: request not found
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/dispatchnetworkcontraints:
+  /redispatching/api/v1/dispatchnetworkcontraints:
     post:
       summary: Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP
       operationId: postDispatchNetworkContraints
-      description: 
-      requestBody: 
-        content: 
-          application/json: 
-            schema: 
+      description:
+      requestBody:
+        content:
+          application/json:
+            schema:
               $ref: '#/components/schemas/restrictionsOsd'
-      responses: 
+      responses:
         '200':
           description: successful operation
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/response'
         '400':
           description: invalid data
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/dispatchnetworkcontraints/status:
+  /redispatching/api/v1/dispatchnetworkcontraints/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD wykazu poleceń redysponowania niezwiązanych z wydanym poleceniem OSP
       operationId: getDispatchNetworkContraintsState
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: requestId
           in: query
           description: Identyfikator przesłanych danych
@@ -141,47 +141,47 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/processingStatusResponse'
-        '400': 
+        '400':
           description: invalid request Id
         '404':
           description: request not found
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/generatedenergywithsupport:
+  /redispatching/api/v1/generatedenergywithsupport:
     post:
       summary: Wolumen energii Ewyk_cert
       operationId: postGeneratedEnergyWithSupport
-      description: 
-      requestBody: 
-        content: 
-          application/json: 
-            schema: 
+      description:
+      requestBody:
+        content:
+          application/json:
+            schema:
               $ref: '#/components/schemas/eWykCerts'
-      responses: 
+      responses:
         '200':
           description: successful operation
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/response'
         '400':
           description: invalid data
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/generatedenergywithsupport/status:
+  /redispatching/api/v1/generatedenergywithsupport/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD wartości E_WYK_CERT
       operationId: getGeneratedEnergyWithSupportState
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: requestId
           in: query
           description: Identyfikator przesłanych danych
@@ -191,22 +191,22 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/processingStatusResponse'
-        '400': 
+        '400':
           description: invalid request Id
         '404':
-          description: request not found  
-      security: 
+          description: request not found
+      security:
         - BearerAuth: []
-  /psdi/api/v1/auctionsupportrequest:
+  /redispatching/api/v1/auctionsupportrequest:
     get:
       summary: Zgłoszenia uOZE przekazywane do OSD przez system WOZE
       operationId: getAuctionSupportRequest
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: redispatchDate
           in: query
           description: Doba redysponowania
@@ -217,46 +217,46 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/uozes'
-        '400': 
+        '400':
           description: invalid request Id
         '404':
-          description: request not found  
-      security: 
+          description: request not found
+      security:
         - BearerAuth: []
     post:
       summary: Zgłoszenie z uOZE przekazanych do OSD poza systemem WOZE
       operationId: postAuctionSupportRequest
-      description: 
-      requestBody: 
-        content: 
-          application/json: 
-            schema: 
+      description:
+      requestBody:
+        content:
+          application/json:
+            schema:
               $ref: '#/components/schemas/uozes'
-      responses: 
+      responses:
         '200':
           description: successful operation
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/response'
         '400':
           description: invalid data
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/auctionsupportrequest/status:
+  /redispatching/api/v1/auctionsupportrequest/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń uOZE
       operationId: getAuctionSupportRequestState
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: requestId
           in: query
           description: Identyfikator przesłanych danych
@@ -266,47 +266,47 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/processingStatusResponse'
-        '400': 
+        '400':
           description: invalid request Id
         '404':
           description: request not found
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/responsiblesubjectforgenerator:
+  /redispatching/api/v1/responsiblesubjectforgenerator:
     post:
       summary: Zmiana POB dla pojedynczego MWE
       operationId: postResponsibleSubjectForGenerator
-      description: 
-      requestBody: 
-        content: 
-          application/json: 
-            schema: 
+      description:
+      requestBody:
+        content:
+          application/json:
+            schema:
               $ref: '#/components/schemas/pobs'
-      responses: 
+      responses:
         '200':
           description: successful operation
-          content: 
-            application/json: 
-              schema: 
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/response'
         '400':
           description: invalid data
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: 
+      security:
         - BearerAuth: []
-  /psdi/api/v1/responsiblesubjectforgenerator/status:
+  /redispatching/api/v1/responsiblesubjectforgenerator/status:
     get:
       summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń zmiany POB dla pojedynczego MWE
       operationId: getResponsibleSubjectForGeneratorState
-      description: 
-      parameters: 
+      description:
+      parameters:
         - name: requestId
           in: query
           description: Identyfikator przesłanych danych
@@ -316,18 +316,70 @@ paths:
       responses:
         '200':
           description: successful operation
-          content: 
+          content:
             application/json:
-              schema: 
+              schema:
                 $ref: '#/components/schemas/processingStatusResponse'
-        '400': 
+        '400':
           description: invalid request Id
         '404':
-          description: request not found  
-      security: 
+          description: request not found
+      security:
         - BearerAuth: []
+  /redispatching/api/v1/redispatchobjects/{entityId}/configuration/{type}/{date}:
+    get:
+      summary: Pobranie informacji o konfiguracji obiektów redysponowania
+      operationId: getRedispatchObjectsConfiguration
+      parameters:
+        - name: entityId
+          in: path
+          description: Identyfikator podmiotu
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: path
+          description: Typ zapytania. 0 - zapytanie o listę wszystkich obiektów redysponowania danego OSD. 1 - zapytanie o listę wszystkich obiektów obiekty redysponowania danego OSD wraz z listą zasobów składających się na każdy z tych obiektów. 2 - zapytanie o listę zasobów składających się na wskazany obiekt redysponowania.
+          required: true
+          schema:
+            type: string
+            enum:
+              - 0
+              - 1
+              - 2
+        - name: date
+          in: path
+          description: Doba konfiguracji. W odpowiedzi przekazana zostanie konfiguracja obiektów - stan na dzień wskazany w zapytaniu
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: objects
+          in: path
+          description: Lista obiektów redysponowania
+          required: false
+          schema:
+            type: array
+            item:
+              type: string
+              description: mRID obiektu redysponowania
+              format: UUID
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/redispatchObjectsConfigurationResponse'
+        '400':
+          description: invalid request Id
+        '404':
+          description: request not found
+      security:
+        - BearerAuth: []
+
 components:
-  securitySchemes: 
+  securitySchemes:
     BearerAuth:
       scheme: bearer
       bearerFormat: JWT
@@ -377,7 +429,7 @@ components:
           description: 'Wolumen energii wyprodukowanej przez instalację wiatrową w przedziale czasowym t, zmierzony na zaciskach generatorów turbin wiatrowych, wyrażony w kWh z dokładnością do 2 miejsc po przecinku'
     redispatchTableOsp:
       type: object
-      properties: 
+      properties:
         seriesPeriod:
           type: object
           description: 'Seria danych w podanym okresie (szereg czasowy)'
@@ -386,29 +438,29 @@ components:
               type: object
               description: 'Przedział czasowy - zakres szeregu czasowego'
               properties:
-                start: 
+                start:
                   type: string
                   format: date-timea
                   description: 'Data i godzina początku okresu w UTC'
                   example: "2024-03-12T02:00:00Z"
-                end: 
-                  type: string 
+                end:
+                  type: string
                   format: date-timea
                   description: 'Data i godzina końca okresu w UTC'
                   example: "2024-03-13T02:00:00Z"
-            resolution: 
+            resolution:
               type: string
               description: 'Rozdzielczość serii danych: PT15M - 15 minut'
-              enum: 
+              enum:
                 - PT15M
             seriesPoints:
               type: array
               description: 'Tablica punktów i wartości'
-              items: 
+              items:
                 $ref: '#/components/schemas/timeseriesOsp'
     redispatchTableOsd:
       type: object
-      properties: 
+      properties:
         redispatchTimeBegin:
           type: string
           format: date-time
@@ -430,7 +482,7 @@ components:
             - S
     redispatchOsp:
       type: object
-      properties: 
+      properties:
         mRID:
           type: string
           description: 'Unikalny identyfikator MWE'
@@ -438,11 +490,11 @@ components:
           example: ''
         redispatchTable:
           type: array
-          items: 
+          items:
             $ref: '#/components/schemas/redispatchTableOsp'
     restrctionOsd:
       type: object
-      properties: 
+      properties:
         mRID:
           type: string
           description: 'Unikalny identyfikator MWE'
@@ -464,29 +516,29 @@ components:
                 type: object
                 description: 'Przedział czasowy - zakres szeregu czasowego'
                 properties:
-                  start: 
+                  start:
                     type: string
                     format: date-timea
                     description: 'Data i godzina początku okresu w UTC'
                     example: "2024-03-12T02:00:00Z"
-                  end: 
-                    type: string 
+                  end:
+                    type: string
                     format: date-timea
                     description: 'Data i godzina końca okresu w UTC'
                     example: "2024-03-13T02:00:00Z"
-              resolution: 
+              resolution:
                 type: string
                 description: 'Rozdzielczość serii danych: PT15M - 15 minut'
-                enum: 
+                enum:
                   - PT15M
               seriesPoints:
                 type: array
                 description: 'Tablica punktów i wartości'
-                items: 
+                items:
                   $ref: '#/components/schemas/timeseriesPZadOsd'
     redispatchOsd:
       type: object
-      properties: 
+      properties:
         mRID:
           type: string
           description: 'Unikalny identyfikator MWE'
@@ -500,11 +552,11 @@ components:
           example: ''
         redispatchTable:
           type: array
-          items: 
+          items:
             $ref: '#/components/schemas/redispatchTableOsd'
     eWykCert:
       type: object
-      properties: 
+      properties:
         mRID:
           type: string
           description: 'Unikalny identyfikator MWE'
@@ -526,25 +578,25 @@ components:
                 type: object
                 description: 'Przedział czasowy - zakres szeregu czasowego'
                 properties:
-                  start: 
+                  start:
                     type: string
                     format: date-timea
                     description: 'Data i godzina początku okresu w UTC'
                     example: "2024-03-12T02:00:00Z"
-                  end: 
-                    type: string 
+                  end:
+                    type: string
                     format: date-timea
                     description: 'Data i godzina końca okresu w UTC'
                     example: "2024-03-13T02:00:00Z"
-              resolution: 
+              resolution:
                 type: string
                 description: 'Rozdzielczość serii danych: PT15M - 15 minut'
-                enum: 
+                enum:
                   - PT15M
               seriesPoints:
                 type: array
                 description: 'Tablica punktów i wartości'
-                items: 
+                items:
                   $ref: '#/components/schemas/timeseriesEWykCert'
     uoze:
       type: object
@@ -569,7 +621,7 @@ components:
         supportingSystem:
           type: string
           description: 'Systemie wsparcia w jakim powinna zostać rozliczona energia'
-          enum: 
+          enum:
             - auction
             - auctionWith
             - greenCertificate
@@ -603,15 +655,15 @@ components:
           nullable: false
     redispatchOspMsg:
       type: array
-      items: 
+      items:
         $ref: '#/components/schemas/redispatchOsp'
     reductionsOsd:
       type: array
-      items: 
+      items:
         $ref: '#/components/schemas/redispatchOsd'
     restrictionsOsd:
       type: array
-      items: 
+      items:
         $ref: '#/components/schemas/restrctionOsd'
     eWykCerts:
       type: array
@@ -627,7 +679,7 @@ components:
         $ref: '#/components/schemas/pob'
     response:
       type: object
-      properties: 
+      properties:
         requestId:
           type: string
           format: UUID
@@ -640,27 +692,27 @@ components:
           type: string
           description: Stopień naruszenia walidacji powstałego w czasie przetwarzania
           enum:
-          - INFO
-          - WARN
-          - ERROR
+            - INFO
+            - WARN
+            - ERROR
           example: WARN
         code:
           type: string
           description: Kod naruszenia walidacji powstałego w czasie przetwarzania
           maxLength: 10
-          example: 
+          example:
         field:
           type: string
           description: wskazanie na element w zgłoszeniu
-          example: 
+          example:
         message:
           type: string
           description: Opis naruszenia walidacji powstałego w czasie przetwarzania
-          example: 
+          example:
       required:
-      - message
-      - severity
-      - code
+        - message
+        - severity
+        - code
       title: ValidationResult
     processingStatusResponse:
       type: object
@@ -670,14 +722,14 @@ components:
           type: string
           format: uuid
           description: "Unikalne ID nadane przez system PSE, które służy do identyfikacji procesu przesłania danych"
-          example: 550e8400-e29b-41d4-a716-446655440000        
+          example: 550e8400-e29b-41d4-a716-446655440000
         status:
           type: string
           description: Status operacji przetworzenia przesłanych danych
           enum:
-          - ACCEPTED
-          - APPROVED
-          - REJECTED
+            - ACCEPTED
+            - APPROVED
+            - REJECTED
           example: APPROVED
         validationViolations:
           type: array
@@ -686,8 +738,67 @@ components:
           items:
             $ref: "#/components/schemas/responseDetail"
       required:
-      - serverMsgId
-      - status       
+        - serverMsgId
+        - status
+    redispatchObjectsConfigurationResponse:
+      type: object
+      description: Odpowiedź z konfiguracją obiektów redysponowania
+      properties:
+        type:
+          type: string
+          description: "Typ zapytania. 0 - zapytanie o listę wszystkich obiektów redysponowania danego OSD. 1 - zapytanie o listę wszystkich obiektów obiekty redysponowania danego OSD wraz z listą zasobów składających się na każdy z tych obiektów. 2 - zapytanie o listę zasobów składających się na wskazany obiekt redysponowania."
+          enum: [ 0, 1, 2 ]
+        date:
+          type: string
+          format: date
+          description: "Doba konfiguracji. Czyli stan konfiguracji obiektów na dzień wskazany w komunikacie."
+          pattern: 'YYYY-MM-DD'
+          examples:
+            - 2023-09-24
+        objects:
+          type: array
+          description: Lista obiektów redysponowania
+          items:
+            type: object
+            required:
+              - redispatchingObjectMrid
+              - redispatchingObjectCode
+            properties:
+              redispatchingObjectMrid:
+                type: string
+                format: uuid
+                description: mRID obiektu redysponowania
+              redispatchingObjectCode:
+                type: string
+                minLength: 38
+                maxLength: 38
+                description: Kod obiektu redysponowania
+                example: KA-10106-19027-03/P/PV/PD/G1/WN/BZ/BI/
+              objectResources:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - registeredResourceMrid
+                    - registeredResourceCode
+                    - registeredResourcePRef
+                  properties:
+                    registeredResourceMrid:
+                      type: string
+                      format: uuid
+                      description: mRID zasobu
+                      example: d0443a92-f807-45f0-867e-70cf5321dec7
+                    registeredResourceCode:
+                      type: string
+                      minLength: 36
+                      maxLength: 36
+                      description: Kod zasobu
+                    registeredResourcePRef:
+                      type: number
+                      description: Moc referencyjna zasobu
+                      minimum: 0
+                      maximum: 99999.999
+                      multipleOf: 0.001
     ErrorResponse:
       type: object
       description: Odpowiedź z serwera w przypadku błędu
@@ -705,5 +816,5 @@ components:
           format: UUID
           description: Unikalny identyfikator przyjętego do przetwarzania komunikatu
       required:
-      - errorDetails
-      - message
+        - errorDetails
+        - message
