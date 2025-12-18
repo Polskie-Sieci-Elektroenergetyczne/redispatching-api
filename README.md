@@ -1,4 +1,4 @@
-# Dokumentacja danych strukturalnych
+# Dokumentacja danych dotyczących redysponowania
 
 [Dokumentacja oraz opis zgłoszeń](docs/Nierynkowe%20redysponowanie.md)  
 
