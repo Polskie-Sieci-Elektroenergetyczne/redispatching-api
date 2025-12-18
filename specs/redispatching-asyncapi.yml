@@ -124,7 +124,7 @@ channels:
         bindingVersion: '0.3.0'
                      
   redispatch.dsoredispatches:
-    address: redispatch.dsoredispatches    
+    address: redispatch.dso-redispatches    
     servers:
       - $ref: '#/servers/amqp-cluster'
     description: Kanał do wysyłania informacji o wydanych przez OSD poleceniach redysponowania w związku z wydanymi przez OSP poleceniami redysponowania    
@@ -146,7 +146,7 @@ channels:
     address: redispatch.request-status.{entityId}
     servers:
       - $ref: '#/servers/amqp-cluster'
-    description: Kanał do odbioru potwierdzenia przetworzenia informacji przekazanych kanałem B2B
+    description: Kanał do odbioru przez podmioty potwierdzenia przetworzenia komunikatów przez OSP
     messages:
       PsdiRequestStatusMessage:
         $ref: '#/components/messages/PsdiRedispatchRealizationResult'
@@ -160,14 +160,14 @@ channels:
           autoDelete: false
         bindingVersion: '0.3.0'
   
-  redispatch.networkcontraints:      
-    address: redispatch.networkcontraints    
+  redispatch.network-contraints:      
+    address: redispatch.network-contraints    
     servers:
       - $ref: '#/servers/amqp-cluster'
     description: Kanał do wysyłania informacji o ograniczeniach w sieci OSD niezwiązanych z wydanym poleceniem OSP
     messages:      
-      PsdiRestrictionsMessage:
-        $ref: '#/components/messages/PsdiRestrictionsMessage'    
+      NetworkContraintsMessage:
+        $ref: '#/components/messages/NetworkContraintsMessage'    
     bindings:
       amqp:
         is: routingKey
@@ -179,8 +179,8 @@ channels:
           type: topic
         bindingVersion: '0.3.0'
         
-  redispatch.generatedenergywithsupport:      
-    address: redispatch.generatedenergywithsupport
+  redispatch.generated-energy-with-support:      
+    address: redispatch.generated-energy-withsupport
     servers:
       - $ref: '#/servers/amqp-cluster'
     description: Kanał do wysyłania informacji o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
@@ -198,8 +198,8 @@ channels:
           type: topic
         bindingVersion: '0.3.0'
   
-  redispatch.auctionsupportrequest:
-    address: redispatch.auctionsupportrequest
+  redispatch.auction-support-request:
+    address: redispatch.auction-support-request
     servers:
       - $ref: '#/servers/amqp-cluster'
     description: Kanał do wysyłania do OSP informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
@@ -217,8 +217,8 @@ channels:
           type: topic
         bindingVersion: '0.3.0'
         
-  redispatch.auctionsupportrequest.{entityId}:
-    address: redispatch.auctionsupportrequest.{entityId}
+  redispatch.auction-support-request.{entityId}:
+    address: redispatch.auction-support-request.{entityId}
     servers:
       - $ref: '#/servers/amqp-cluster'
     description: Kanał do wysyłania do OSD informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, , które złożyli Wytwórcy poza aplikacją WOZE po wydanym poleceniu przez OSP
@@ -229,14 +229,14 @@ channels:
       amqp:
         is: queue
         queue:
-          name: redispatch.auctionsupportrequest.{entityId}
+          name: redispatch.auction-support-request.{entityId}
           durable: true
           exclusive: false
           autoDelete: false
         bindingVersion: '0.3.0'    
         
-  redispatch.responsiblesubjectforgenerator:
-    address: redispatch.responsiblesubjectforgenerator
+  redispatch.responsible-subject-for-generator:
+    address: redispatch.responsible-subject-for-generator
     servers:
       - $ref: '#/servers/amqp-cluster'
     description: Kanał do przekazania do OSP informacji o zmianie przypisania POB do pojedynczego MWE
@@ -336,10 +336,10 @@ operations:
     title: Operacja wysłania informacji o ograniczeniach w sieci OSD niewydanych przez OSD poleceniach redysponowania na skutek polecenia OSP
     action: send
     channel:
-      $ref: '#/channels/redispatch.networkcontraints'
+      $ref: '#/channels/redispatch.network-contraints'
     summary: Nadanie komunikatu z informacją o wydanych poleceniach redysponowania
     messages:
-      - $ref: '#/channels/redispatch.networkcontraints/messages/PsdiRestrictionsMessage'
+      - $ref: '#/channels/redispatch.network-contraints/messages/NetworkContraintsMessage'
     security:
       - $ref: '#/components/securitySchemes/oauth2'  
       
@@ -347,10 +347,10 @@ operations:
     title: Operacja wysłania informacji o E_wyk_cert dla MWE, które były redysponowane przez OSD w związku z wydanym poleceniem OSP
     action: send
     channel:
-      $ref: '#/channels/redispatch.generatedenergywithsupport'
+      $ref: '#/channels/redispatch.generated-energy-with-support'
     summary: Nadanie komunikatu z informacją o E_wyk_cert
     messages:
-      - $ref: '#/channels/redispatch.generatedenergywithsupport/messages/PsdiEWykCertMessage'
+      - $ref: '#/channels/redispatch.generated-energy-with-support/messages/PsdiEWykCertMessage'
     security:
       - $ref: '#/components/securitySchemes/oauth2'
       
@@ -358,10 +358,10 @@ operations:
     title: Operacja wysłania informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, które złożyli Wytwórcy poza aplikacją WOZE po wydanym poleceniu przez OSP
     action: send
     channel:
-      $ref: '#/channels/redispatch.auctionsupportrequest'
+      $ref: '#/channels/redispatch.auction-support-request'
     summary: Nadanie komunikatu z informacją o zgłoszeniach uOze
     messages:
-      - $ref: '#/channels/redispatch.auctionsupportrequest/messages/PsdiUOzeMessage'
+      - $ref: '#/channels/redispatch.auction-support-request/messages/PsdiUOzeMessage'
     security:
       - $ref: '#/components/securitySchemes/oauth2'    
       
@@ -369,10 +369,10 @@ operations:
     title: Operacja pobrania informacji o zgłoszeniach wynikających z art. 93 ust. 18 Ustawy o OZE, które złożyli Wytwórcy w aplikacji WOZE po wydanym poleceniu przez OSP
     action: receive
     channel:
-      $ref: '#/channels/redispatch.auctionsupportrequest.{entityId}'
+      $ref: '#/channels/redispatch.auction-support-request.{entityId}'
     summary: Pobranie komunikatu z informacją o zgłoszeniach uOze
     messages:
-      - $ref: '#/channels/redispatch.auctionsupportrequest.{entityId}/messages/PsdiUOzeMessage'
+      - $ref: '#/channels/redispatch.auction-support-request.{entityId}/messages/PsdiUOzeMessage'
     security:
       - $ref: '#/components/securitySchemes/oauth2'
       
@@ -380,10 +380,10 @@ operations:
     title: Operacja wysłania informacji o zmianie przypisania POB do pojedynczego MWE
     action: send
     channel:
-      $ref: '#/channels/redispatch.responsiblesubjectforgenerator'
+      $ref: '#/channels/redispatch.responsible-subject-for-generator'
     summary: Nadanie komunikatu z informacją o zgłoszeniach uOze
     messages:
-      - $ref: '#/channels/redispatch.responsiblesubjectforgenerator/messages/PsdiPOBMessage'
+      - $ref: '#/channels/redispatch.responsible-subject-for-generator/messages/PsdiPOBMessage'
     security:
       - $ref: '#/components/securitySchemes/oauth2'
 
@@ -497,7 +497,7 @@ components:
         description: Korelacja na podstawie serverMsqId z nagłówka.
         location: $message.header#/serverMsqId
 
-    PsdiRestrictionsMessage:
+    NetworkContraintsMessage:
       name: Informacja o ograniczeniach w sieci OSD nie związanych z wydanym przez OSP poleceniem redysponowania
       title: Informacja o ograniczeniach w sieci OSD
       contentType: application/json
@@ -512,8 +512,8 @@ components:
         location: $message.header#/serverMsqId
 
     PsdiRedispatchRealizationResult:
-      name: Informacja o przetworzeniu informacji o wydanym przez OSD pocelceniu redysponowania
-      title: Informacja o przetworzeniu informacji o wydanym przez OSD pocelceniu redysponowania
+      name: Informacja o przetworzeniu informacji o wydanym przez OSD poleceniu redysponowania
+      title: Informacja o przetworzeniu informacji o wydanym przez OSD poleceniu redysponowania
       contentType: application/json
       payload:
         $ref: '#/components/schemas/PsdiMessageResult'
@@ -1245,9 +1245,9 @@ components:
           tokenUrl: https://auth.example.com/oauth2/token
           refreshUrl: https://auth.example.com/oauth2/refresh
           availableScopes:
-            "rabbitmq.read:*/redispatch/redispatch.order.{sub}": "Uprawnienie do odbioru komunikatów polecenia redysponowania z dedykowanej kolejki"
-            "rabbitmq.write:*/redispatch/redispatch.acknowledgement": "Uprawnienie pozwala wysyłać odpowiedź na wydane polecenie redysponowania."
-            "rabbitmq.read:*/redispatch/redispatch.information.{sub}": "Uprawnienie do odbioru informacji o poleceniu redysponowania z dedykowanej kolejki"
-            "rabbitmq.write:*/redispatch/failure": "Uprawnienie pozwala wysyłać błędy spowodowane komunikatami OSP polecenie redysponowania."
-            "rabbitmq.read:*/redispatch/failure.{sub}": "Uprawnienie pozwala wysyłać odpowiedź na wydane polecenie redysponowania."            
+            "amqp.read:*/redispatch/redispatch.order.{sub}": "Uprawnienie do odbioru komunikatów polecenia redysponowania z dedykowanej kolejki"
+            "amqp.write:*/redispatch/redispatch.acknowledgement": "Uprawnienie pozwala wysyłać odpowiedź na wydane polecenie redysponowania."
+            "amqp.read:*/redispatch/redispatch.information.{sub}": "Uprawnienie do odbioru informacji o poleceniu redysponowania z dedykowanej kolejki"
+            "amqp.write:*/redispatch/failure": "Uprawnienie pozwala wysyłać błędy spowodowane komunikatami OSP polecenie redysponowania."
+            "amqp.read:*/redispatch/failure.{sub}": "Uprawnienie pozwala wysyłać odpowiedź na wydane polecenie redysponowania."            
             
