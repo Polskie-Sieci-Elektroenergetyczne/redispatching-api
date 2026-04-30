@@ -5,9 +5,7 @@ on:
     branches: ["main", "master"]  # Trigger on push to main
     paths:
       - '.github/workflows/generate-api-docs.yml'
-      - 'specs/redispatching-asyncapi.yml'
       - 'specs/redispatching-openapi.yml'
-      - 'docs/index.html'
 
 # Permissions required to push the generated HTML to the gh-pages branch
 permissions:
@@ -26,21 +24,10 @@ jobs:
           node-version: '20'
 
       - name: Prepare Folders
-        run: |
-          mkdir -p dist/openapi
-          mkdir -p dist/asyncapi
-
-      - name: Copy Landing Page
-        run: cp docs/index.html dist/index.html
+        run: mkdir -p dist
 
       - name: Generate OpenAPI documentation
-        run: npx @redocly/cli build-docs specs/redispatching-openapi.yml -o dist/openapi/index.html     
-
-      - name: Install AsyncAPI Generator
-        run: npm install -g @asyncapi/generator
-      
-      - name: Generate AsyncAPI documentation
-        run: ag specs/redispatching-asyncapi.yml @asyncapi/html-template -o dist/asyncapi -p singleFile=true --force-write
+        run: npx @redocly/cli build-docs specs/redispatching-openapi.yml -o dist/index.html     
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

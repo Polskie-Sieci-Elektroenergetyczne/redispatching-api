@@ -1,540 +1,906 @@
-openapi: '3.1.2'
+openapi: 3.1.2
 info:
-  title: API dla redysponowania
-  version: 0.0.1
-servers:
-- url: https://b2b.pse.pl/
-  description: B2B REST API server
+  title: Redispatching B2B API
+  version: '1.0.0'
+  description: |
+    B2B API for TSO redispatching services.
 
+    **Part 1 — Real-time SSE + REST for redispatching orders workflow**
+    1. Client connects to `/redispatch/{entityId}/stream`.
+    2. **Resumption:** If the connection drops, the Client MUST reconnect providing the `Last-Event-ID` header with the ID of the last received event. The server will replay missed events.
+    3. Client listens for `ORDER_ISSUED` events and `heartbeat` signals.
+    4. When an `ORDER_ISSUED` event is received, Client fetches details via `GET`.
+    5. Client sends confirmation and decision via `POST`.
+
+    **Part 2 — Batch REST settlement API**
+    Endpoints for submitting and querying redispatching data: DSO redispatches, grid constraints, certified energy volumes, auction support requests, balancing entity changes, and object configuration.
+
+servers:
+  - url: https://b2b.pse.pl
+    description: Production B2B API server
+
+security:
+  - mTLS: []
+
+tags:
+  - name: SSE Streaming
+    description: Server-Sent Events stream for real-time order notifications
+  - name: Redispatch Orders
+    description: Retrieve and acknowledge redispatching orders
+  - name: DSO Redispatch
+    description: Submit and query DSO redispatching redispatches
+  - name: Grid Constraints
+    description: Submit and query DSO grid constraints unrelated to TSO orders
+  - name: Certified Energy
+    description: Submit and query certified generated energy volumes (E_WYK_CERT)
+  - name: Auction Support
+    description: Submit and query auction support requests (uOZE)
+  - name: Configuration
+    description: Retrieve redispatching object configuration
 
 paths:
-  /redispatching/api/v1/redispatch:
+  # ──────────────────────────────────────────────
+  # Part 1 — SSE + REST order workflow
+  # ──────────────────────────────────────────────
+
+  /redispatching/api/v1/redispatch/{entityId}/stream:
     get:
-      summary: Pobieranie listy wydanych poleceń redysponowania dla podanej doby
-      operationId: getRedispatchByDate
-      description:
+      tags: [SSE Streaming]
+      operationId: subscribeToEntityStream
+      summary: Subscribe to order-issued events
+      description: |
+        Opens a Server-Sent Events (SSE) stream for a specific entity.
+
+        **Resumption:** To resume a broken connection without missing events, the client MUST provide the `Last-Event-ID` header containing the ID of the last event successfully processed. The server will replay events occurring after that ID.
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique 5-character identifier of the entity.
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            The ID of the last event the client received.
+            If provided, the server will replay all subsequent events that occurred after this ID before sending new real-time events.
+      responses:
+        '200':
+          description: Connection established.
+          content:
+            text/event-stream:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ConnectedEvent'
+                  - $ref: '#/components/schemas/HeartbeatEvent'
+                  - $ref: '#/components/schemas/RedispatchOrderIssuedEvent'
+              examples:
+                Connected:
+                  summary: Initial Connected Event
+                  value:
+                    eventType: "connected"
+                    connectionId: "550e8400-e29b-41d4-a716-446655440000"
+                    timestamp: "2025-07-22T08:00:00Z"
+                Heartbeat:
+                  summary: Periodic Heartbeat
+                  value:
+                    eventType: "heartbeat"
+                    timestamp: "2025-07-22T08:00:30Z"
+                OrderIssued:
+                  summary: Order Issued Event
+                  value:
+                    eventType: "ORDER_ISSUED"
+                    redispatchOrderId: "1/I/22.07.2025"
+                    entityId: "ENT01"
+                    timestamp: "2025-07-22T08:01:00Z"
+                    resourceUrl: "/redispatch/ENT01/orders/1%2FI%2F22.07.2025"
+
+  /redispatching/api/v1/redispatch/validation/stream:
+    get:
+      tags: [SSE Streaming]
+      operationId: subscribeToEntityValidationStream
+      summary: Subscribe to validation status events
+      description: |
+        Opens a Server-Sent Events (SSE) stream for a validation status notification events.
+
+        **Resumption:** To resume a broken connection without missing events, the client MUST provide the `Last-Event-ID` header containing the ID of the last event successfully processed. The server will replay events occurring after that ID.
+      parameters:      
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            The ID of the last event the client received.
+            If provided, the server will replay all subsequent events that occurred after this ID before sending new real-time events.
+      responses:
+        '200':
+          description: Connection established.
+          content:
+            text/event-stream:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ConnectedEvent'
+                  - $ref: '#/components/schemas/HeartbeatEvent'
+                  - $ref: '#/components/schemas/ValidationStatusEvent'
+              examples:
+                Connected:
+                  summary: Initial Connected Event
+                  value:
+                    eventType: "connected"
+                    connectionId: "550e8400-e29b-41d4-a716-446655440000"
+                    timestamp: "2025-07-22T08:00:00Z"
+                Heartbeat:
+                  summary: Periodic Heartbeat
+                  value:
+                    eventType: "heartbeat"
+                    timestamp: "2025-07-22T08:00:30Z"
+                ValidationStatus:
+                  summary: Order Issued Event
+                  value:
+                    eventType: "VALIDATION_STATUS"
+                    requestId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    entityId: "ENT01"
+                    timestamp: "2025-07-22T08:01:00Z"
+                    resourceUrl: "/redispatching/api/v1/dso-redispatches/status"
+
+  /redispatching/api/v1/redispatch/{entityId}/orders/{redispatchOrderId}:
+    get:
+      tags: [Redispatch Orders]
+      operationId: getRedispatchOrderDetails
+      summary: Get redispatching order details
+      description: Fetches the full technical details of a specific redispatching order.
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: redispatchOrderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The business ID of the order (URL encoded).
+      responses:
+        '200':
+          description: Order details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedispatchOrder'
+        '404':
+          description: Order not found.
+
+  /redispatching/api/v1/redispatch/{entityId}/orders/{redispatchOrderId}/acknowledgement:
+    post:
+      tags: [Redispatch Orders]
+      operationId: postRedispatchOrderAcknowledgement
+      summary: Send acknowledgement or decision
+      description: |
+        Used for three stages of feedback:
+        1. **Confirm Receipt:** Send status `RECEIVED` immediately after fetching the order.
+        2. **Accept:** Send status `ACCEPTED` if the order can be realized.
+        3. **Reject:** Send status `REJECTED` if the order cannot be realized.
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: redispatchOrderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedispatchAcknowledgement'
+      responses:
+        '202':
+          description: Acknowledgement accepted for processing.
+        '400':
+          description: Invalid acknowledgement format.
+
+  # ──────────────────────────────────────────────
+  # Part 2 — Batch REST settlement API
+  # ──────────────────────────────────────────────
+
+  /redispatching/api/v1/redispatch-orders-by-date:
+    get:
+      # TODO: Shall entity id be added ?
+      tags: [Redispatch Orders]
+      operationId: getRedispatchOrdersByDate
+      summary: Retrieve redispatching orders for a given date
+      description: Returns the list of TSO redispatching orders issued for the specified delivery day.
       parameters:
         - name: redispatchDate
           in: query
-          description: Doba redysponowania
+          description: Delivery day for which redispatching orders are requested.
           required: true
           schema:
             type: string
             format: date
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/redispatchOspMsg'
+                $ref: '#/components/schemas/TsoRedispatches'
         '400':
-          description: invalid date
+          description: Invalid date.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Odmowa dostępu
+          description: Access denied.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: redispatch not found
+          description: Redispatch not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-        - BearerAuth: []
 
-  /redispatching/api/v1/dso-redispatch:
+  /redispatching/api/v1/dso-redispatches:
     post:
-      summary: Przekazywanie listy wydanych przez OSD poleceń redysponowania w zadanej dobie
-      operationId: postDSORedispatches
-      description:
+      tags: [DSO Redispatch]
+      operationId: postDsoRedispatches
+      summary: Submit DSO redispatches
+      description: Submits the list of redispatching orders issued by the DSO for a given delivery day.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/reductionsOsd'
+              $ref: '#/components/schemas/DsoRedispatches'
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/response'
+                $ref: '#/components/schemas/SubmissionResponse'
         '400':
-          description: invalid data
+          description: Invalid data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-        - BearerAuth: []
-  /redispatching/api/v1/dso-redispatch/status:
+
+  /redispatching/api/v1/dso-redispatches/status:
+    # TODO: Do we need SSE for status notifications ?
     get:
-      summary: Pobieranie status przetworzenia przekazanych przez OSD poleceń redysponowania
-      operationId: getDSORedispatchesState
-      description:
+      tags: [DSO Redispatch]
+      operationId: getDsoRedispatchesStatus
+      summary: Get DSO redispatching processing status
+      description: Retrieves the processing status of previously submitted DSO redispatches.
       parameters:
         - name: requestId
           in: query
-          description: Identyfikator przesłanych danych
+          description: Identifier of the submitted data.
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/processingStatusResponse'
+                $ref: '#/components/schemas/ProcessingStatusResponse'
         '400':
-          description: invalid request Id
+          description: Invalid request ID.
         '404':
-          description: request not found
-      security:
-        - BearerAuth: []
-  /redispatching/api/v1/dispatch-network-contraints:
+          description: Request not found.
+
+  /redispatching/api/v1/dso-grid-constraints:
     post:
-      summary: Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP
-      operationId: postDispatchNetworkContraints
-      description:
+      tags: [Grid Constraints]
+      operationId: postDispatchGridConstraints
+      summary: Submit DSO grid constraints
+      description: Submits DSO grid constraints unrelated to a TSO-issued redispatching order.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/restrictionsOsd'
+              $ref: '#/components/schemas/DsoGridConstraints'
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/response'
+                $ref: '#/components/schemas/SubmissionResponse'
         '400':
-          description: invalid data
+          description: Invalid data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-        - BearerAuth: []
-  /redispatching/api/v1/dispatch-network-contraints/status:
+
+  /redispatching/api/v1/dso-grid-constraints/status:
+    # TODO: Do we need SSE for status notifications ?
     get:
-      summary: Pobieranie status przetworzenia przekazanych przez OSD wykazu poleceń redysponowania niezwiązanych z wydanym poleceniem OSP
-      operationId: getDispatchNetworkContraintsState
-      description:
+      tags: [Grid Constraints]
+      operationId: getDispatchGridConstraintsStatus
+      summary: Get grid constraints processing status
+      description: Retrieves the processing status of previously submitted DSO grid constraints.
       parameters:
         - name: requestId
           in: query
-          description: Identyfikator przesłanych danych
+          description: Identifier of the submitted data.
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/processingStatusResponse'
+                $ref: '#/components/schemas/ProcessingStatusResponse'
         '400':
-          description: invalid request Id
+          description: Invalid request ID.
         '404':
-          description: request not found
-      security:
-        - BearerAuth: []
+          description: Request not found.
+
   /redispatching/api/v1/generated-energy-with-support:
     post:
-      summary: Wolumen energii Ewyk_cert
+      tags: [Certified Energy]
       operationId: postGeneratedEnergyWithSupport
-      description:
+      summary: Submit certified generated energy volumes
+      description: Submits certified generated energy (E_WYK_CERT) volumes measured at generator terminals.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/eWykCerts'
+              $ref: '#/components/schemas/EWykCertCollection'
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/response'
+                $ref: '#/components/schemas/SubmissionResponse'
         '400':
-          description: invalid data
+          description: Invalid data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-        - BearerAuth: []
+
   /redispatching/api/v1/generated-energy-with-support/status:
+    # TODO: Do we need SSE for status notifications ?
     get:
-      summary: Pobieranie statusu przetworzenia przekazanych przez OSD wartości E_WYK_CERT
-      operationId: getGeneratedEnergyWithSupportState
-      description:
+      tags: [Certified Energy]
+      operationId: getGeneratedEnergyWithSupportStatus
+      summary: Get certified energy processing status
+      description: Retrieves the processing status of previously submitted E_WYK_CERT values.
       parameters:
         - name: requestId
           in: query
-          description: Identyfikator przesłanych danych
+          description: Identifier of the submitted data.
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/processingStatusResponse'
+                $ref: '#/components/schemas/ProcessingStatusResponse'
         '400':
-          description: invalid request Id
+          description: Invalid request ID.
         '404':
-          description: request not found
-      security:
-        - BearerAuth: []
+          description: Request not found.
+
   /redispatching/api/v1/auction-support-request:
     get:
-      summary: Zgłoszenia uOZE przekazywane do OSD przez system WOZE
+      # TODO: Shall we add entity id to parameters
+      tags: [Auction Support]
       operationId: getAuctionSupportRequest
-      description:
+      summary: Retrieve auction support requests
+      description: Returns auction support requests (uOZE) forwarded to the DSO via the WOZE system for the given delivery day.
       parameters:
         - name: redispatchDate
           in: query
-          description: Doba redysponowania
+          description: Delivery day for which auction support requests are retrieved.
           required: true
           schema:
             type: string
             format: date
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/uozes'
+                $ref: '#/components/schemas/UozeCollection'
         '400':
-          description: invalid request Id
+          description: Invalid request ID.
         '404':
-          description: request not found
-      security:
-        - BearerAuth: []
+          description: Request not found.
     post:
-      summary: Zgłoszenie z uOZE przekazanych do OSD poza systemem WOZE
+      tags: [Auction Support]
       operationId: postAuctionSupportRequest
-      description:
+      summary: Submit auction support requests
+      description: Submits auction support requests (uOZE) forwarded to the DSO outside of the WOZE system.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/uozes'
+              $ref: '#/components/schemas/UozeCollection'
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/response'
+                $ref: '#/components/schemas/SubmissionResponse'
         '400':
-          description: invalid data
+          description: Invalid data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security:
-        - BearerAuth: []
-  /redispatching/api/v1/auction-support-request/status:
+
+  /redispatching/api/v1/auction-support-request/statue:
+    # TODO: Do we need SSE for status notifications ?
     get:
-      summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń uOZE
-      operationId: getAuctionSupportRequestState
-      description:
+      tags: [Auction Support]
+      operationId: getAuctionSupportRequestStatus
+      summary: Get auction support request processing status
+      description: Retrieves the processing status of previously submitted auction support requests (uOZE).
       parameters:
         - name: requestId
           in: query
-          description: Identyfikator przesłanych danych
+          description: Identifier of the submitted data.
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/processingStatusResponse'
+                $ref: '#/components/schemas/ProcessingStatusResponse'
         '400':
-          description: invalid request Id
+          description: Invalid request ID.
         '404':
-          description: request not found
-      security:
-        - BearerAuth: []
-  /redispatching/api/v1/responsible-subject-for-generator:
-    post:
-      summary: Zmiana POB dla pojedynczego MWE
-      operationId: postResponsibleSubjectForGenerator
-      description:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/pobs'
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/response'
-        '400':
-          description: invalid data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      security:
-        - BearerAuth: []
-  /redispatching/api/v1/responsible-subject-for-generator/status:
-    get:
-      summary: Pobieranie status przetworzenia przekazanych przez OSD zgłoszeń zmiany POB dla pojedynczego MWE
-      operationId: getResponsibleSubjectForGeneratorState
-      description:
-      parameters:
-        - name: requestId
-          in: query
-          description: Identyfikator przesłanych danych
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/processingStatusResponse'
-        '400':
-          description: invalid request Id
-        '404':
-          description: request not found
-      security:
-        - BearerAuth: []
+          description: Request not found.
+
   /redispatching/api/v1/redispatch-objects/{entityId}/configuration/{type}/{date}:
     get:
-      summary: Pobranie informacji o konfiguracji obiektów redysponowania
+      tags: [Configuration]
       operationId: getRedispatchObjectsConfiguration
+      summary: Get redispatching object configuration
+      description: |
+        Retrieves the configuration of redispatching objects for the specified entity and date.
+
+        The `type` parameter controls the level of detail:
+        - `0` — list all redispatching objects for the given DSO
+        - `1` — list all redispatching objects with their constituent resources
+        - `2` — list resources for a specific redispatching object (use `objects` query parameter to filter)
       parameters:
         - name: entityId
           in: path
-          description: Identyfikator podmiotu
+          description: Entity identifier.
           required: true
           schema:
             type: string
         - name: type
           in: path
-          description: Typ zapytania. 0 - zapytanie o listę wszystkich obiektów redysponowania danego OSD. 1 - zapytanie o listę wszystkich obiektów obiekty redysponowania danego OSD wraz z listą zasobów składających się na każdy z tych obiektów. 2 - zapytanie o listę zasobów składających się na wskazany obiekt redysponowania.
+          description: |
+            Query type. 0 — all objects, 1 — objects with resources, 2 — resources of specified objects.
           required: true
           schema:
             type: string
             enum:
-              - 0
-              - 1
-              - 2
+              - '0'
+              - '1'
+              - '2'
         - name: date
           in: path
-          description: Doba konfiguracji. W odpowiedzi przekazana zostanie konfiguracja obiektów - stan na dzień wskazany w zapytaniu
+          description: Configuration date. The response returns the object configuration as of this date.
           required: true
           schema:
             type: string
             format: date
         - name: objects
-          in: path
-          description: Lista obiektów redysponowania
+          in: query
           required: false
+          description: List of redispatching object mRIDs to filter (used with type=2).
           schema:
             type: array
-            item:
+            items:
               type: string
-              description: mRID obiektu redysponowania
-              format: UUID
+              description: mRID of a redispatching object.
+              format: uuid
       responses:
         '200':
-          description: successful operation
+          description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/redispatchObjectsConfigurationResponse'
+                $ref: '#/components/schemas/RedispatchObjectsConfigurationResponse'
         '400':
-          description: invalid request Id
+          description: Invalid request.
         '404':
-          description: request not found
-      security:
-        - BearerAuth: []
+          description: Not found.
 
 components:
   securitySchemes:
-    BearerAuth:
-      scheme: bearer
-      bearerFormat: JWT
-      type: http
-      description: Token JWT uzyskany po zalogowaniu do konta B2B auth.ppb.pse.pl
+    mTLS:
+      type: mutualTLS
+      description: |
+        Mutual TLS (mTLS) authentication using X.509 client certificates.
+        Clients must present a valid certificate signed by the TSO-trusted Certificate Authority
+        when establishing the TLS connection.
+
   schemas:
-    timeseriesOsp:
+    # ──────────────────────────────────────────────
+    # SSE Event schemas (from File 1)
+    # ──────────────────────────────────────────────
+
+    RedispatchOrderIssuedEvent:
       type: object
+      description: Notification sent via SSE when a new order is issued.
+      required:
+        - eventType
+        - redispatchOrderId
+        - entityId
+        - timestamp
+        - resourceUrl
+      properties:
+        eventType:
+          type: string
+          enum: [ORDER_ISSUED]
+        redispatchOrderId:
+          type: string
+          description: The unique business identifier of the order.
+          examples: ["1/I/22.07.2025"]
+        entityId:
+          type: string
+          description: The 5-character entity identifier.
+        timestamp:
+          type: string
+          format: date-time
+        resourceUrl:
+          type: string
+          description: Relative URL to fetch the full order.
+          examples: ["/redispatch/ENT01/orders/1%2FI%2F22.07.2025"]
+
+    ValidationStatusEvent:
+      type: object
+      description: Notification sent via SSE when a validation status is ready.
+      required:
+        - eventType
+        - requestId
+        - entityId
+        - timestamp
+        - resourceUrl
+      properties:
+        eventType:
+          type: string
+          enum: [VALIDATION_STATUS]
+        requestId:
+          type: string
+          description: The UUID unique business identifier of the request.
+          examples: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+        entityId:
+          type: string
+          description: The 5-character entity identifier.
+        timestamp:
+          type: string
+          format: date-time
+        resourceUrl:
+          type: string
+          description: Relative URL to fetch the full status.
+          examples: ["/redispatching/api/v1/dso-grid-constraints/status"]
+
+    ConnectedEvent:
+      type: object
+      description: Initial event sent immediately after a successful connection.
+      required:
+        - eventType
+        - connectionId
+        - timestamp
+      properties:
+        eventType:
+          type: string
+          enum: [connected]
+        connectionId:
+          type: string
+          description: Unique identifier for the current SSE session.
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+
+    HeartbeatEvent:
+      type: object
+      description: Periodic event sent to keep the connection alive.
+      required:
+        - eventType
+        - timestamp
+      properties:
+        eventType:
+          type: string
+          enum: [heartbeat]
+        timestamp:
+          type: string
+          format: date-time
+
+    # ──────────────────────────────────────────────
+    # Domain schemas — SSE order workflow (from File 1)
+    # ──────────────────────────────────────────────
+
+    RedispatchOrder:
+      type: object
+      description: Full details of the redispatching order with flattened header data.
+      required:
+        - redispatchOrderId
+        - entityId
+        - issueOrderTs
+        - redispatchOrderReason
+        - redispatchOrderPeriod
+        - redispatchOrders
+      properties:
+        redispatchOrderId:
+          type: string
+          description: Business ID of the order.
+          examples: ["1/I/22.07.2025"]
+        entityId:
+          type: string
+          description: Entity identifier.
+          minLength: 5
+          maxLength: 5
+        issueOrderTs:
+          type: string
+          format: date-time
+          description: Timestamp when the order was issued.
+        isInformational:
+          type: boolean
+          description: Indicates whether the redispatch order is informational only (does not require execution).          
+        redispatchOrderReason:
+          type: string
+          description: "Purpose: B — balancing, S — grid."
+          enum: [B, S]
+        redispatchOrderPeriod:
+          $ref: '#/components/schemas/RedispatchOrderPeriod'
+        redispatchOrders:
+          type: array
+          minItems: 1
+          description: Array of technical redispatching details.
+          items:
+            $ref: '#/components/schemas/RedispatchOrderItem'
+
+    RedispatchOrderItem:
+      type: object
+      required:
+        - redispatchingObjectMrid
+        - measurementUnit
+        - curveType
+        - seriesPeriods
+      properties:
+        redispatchingObjectMrid:
+          type: string
+          format: uuid
+        measurementUnit:
+          type: string
+          enum: [MAW]
+        curveType:
+          type: string
+          enum: [A01]
+        seriesPeriods:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - direction
+              - autogenerationRedispatch
+              - resolution
+              - timeInterval
+              - seriesPoints
+            properties:
+              direction:
+                type: string
+                enum: [G, P]
+              autogenerationRedispatch:
+                type: string
+                enum: ['0', '1']
+              resolution:
+                type: string
+                enum: [P1D, PT60M, PT15M]
+              timeInterval:
+                $ref: '#/components/schemas/TimeInterval'
+              seriesPoints:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SeriesPoint'
+
+    RedispatchOrderPeriod:
+      type: object
+      required: [startDt, endDt]
+      properties:
+        startDt:
+          type: string
+          format: date-time
+        endDt:
+          type: string
+          format: date-time
+
+    TimeInterval:
+      type: object
+      required: [startDt, endDt]
+      properties:
+        startDt:
+          type: string
+          format: date-time
+        endDt:
+          type: string
+          format: date-time
+
+    SeriesPoint:
+      type: object
+      required: [position, quantityMax, quantityMin]
       properties:
         position:
           type: integer
-          format: int32
-          description: Kolejny numer pozycji (punktu czasowego), interpertowany w zależności od SeriesPeriod.timeInterval oraz SeriesPeriod.resolution
+        quantityMax:
+          type: number
+        quantityMin:
+          type: number
+
+    RedispatchAcknowledgement:
+      type: object
+      description: Acknowledgement payload sent by the entity.
+      required:
+        - redispatchOrderId
+        - entityId
+        - status
+      properties:
+        redispatchOrderId:
+          type: string
+          description: Reference to the order ID.
+        entityId:
+          type: string
+          minLength: 5
+          maxLength: 5
+        status:
+          type: string
+          description: "Status: RECEIVED, ACCEPTED, REJECTED."
+          enum: [RECEIVED, ACCEPTED, REJECTED]
+        reason:
+          type: string
+          description: Optional comment for the decision.
+          maxLength: 512
+
+    # ──────────────────────────────────────────────
+    # Domain schemas — Batch settlement API (from File 2)
+    # ──────────────────────────────────────────────
+
+    TimeseriesTso:
+      type: object
+      properties:
+        end:
+          type: string
+          format: date-time
+          description: End of the time interval in UTC.
+          example: "2024-03-13T02:00:00Z"
         pZad:
           type: integer
           format: int64
-          description: 'Zadany przez OSP maksymalny poziom dopuszczalenej generacji mocy czynnej w miejscu przyłączenia instalacji fotowoltaicznej do sieci OSD, wyrażony w kW z dokładnością do 1 kW'
+          description: Maximum allowed active power generation level at the PV installation grid connection point set by the TSO, expressed in kW with 1 kW precision.
         redispatchType:
           type: string
-          description: 'Typ polecenia, B - bilansowe, S - sieciowe'
+          description: "Order type: B — balancing, S — grid."
+          example: "B"
           enum:
             - B
             - S
-    timeseriesPZadOsd:
+
+    TimeseriesPZadDso:
+      # TODO: Use english name instead of PZad
       type: object
       properties:
         position:
           type: integer
           format: int32
-          description: Kolejny numer pozycji (punktu czasowego), interpertowany w zależności od SeriesPeriod.timeInterval oraz SeriesPeriod.resolution
-        pZadOsd:
-          type: integer
+          description: Sequential position number (time point), interpreted based on the series period time interval and resolution.
+        pZadDso:
+          type: ['integer', 'null']
           format: int32
-          nullable: true
-          description: 'Maksymalny poziom generacji mocy czynnej instalacji fotowoltaicznej zdeterminowany przyczynami innymi niż wydane przez OSP polecenie Redysponowania Nierynkowego, w poszczególnych przedziałach czasowych, wyrażony w kW z dokładnością do 1 kW'
-    timeseriesEWykCert:
+          description: Maximum active power generation level of the PV installation determined by causes other than the TSO non-market redispatching order, in each time interval, expressed in kW with 1 kW precision.
+
+    TimeseriesEWykCert:
+      # TODO: Use english name instead of EWykCert
       type: object
       properties:
         position:
           type: integer
           format: int32
-          description: Kolejny numer pozycji (punktu czasowego), interpertowany w zależności od SeriesPeriod.timeInterval oraz SeriesPeriod.resolution
+          description: Sequential position number (time point), interpreted based on the series period time interval and resolution.
         eWykCert:
-          type: number
+          type: ['number', 'null']
           format: double
-          nullable: true
-          description: 'Wolumen energii wyprodukowanej przez instalację wiatrową w przedziale czasowym t, zmierzony na zaciskach generatorów turbin wiatrowych, wyrażony w kWh z dokładnością do 2 miejsc po przecinku'
-    redispatchTableOsp:
+          description: Volume of energy produced by the wind installation in time interval t, measured at wind turbine generator terminals, expressed in kWh with 2 decimal places precision.
+
+    TsoRedispatchTable:
       type: object
       properties:
         seriesPeriod:
           type: object
-          description: 'Seria danych w podanym okresie (szereg czasowy)'
+          description: Data series for a given period (time series).
           properties:
             timeInterval:
               type: object
-              description: 'Przedział czasowy - zakres szeregu czasowego'
+              description: Time interval — time series range.
               properties:
                 start:
                   type: string
-                  format: date-timea
-                  description: 'Data i godzina początku okresu w UTC'
+                  format: date-time
+                  description: Period start date and time in UTC.
                   example: "2024-03-12T02:00:00Z"
                 end:
                   type: string
-                  format: date-timea
-                  description: 'Data i godzina końca okresu w UTC'
+                  format: date-time
+                  description: Period end date and time in UTC.
                   example: "2024-03-13T02:00:00Z"
-            resolution:
-              type: string
-              description: 'Rozdzielczość serii danych: PT15M - 15 minut'
-              enum:
-                - PT15M
-            seriesPoints:
+            seriesIntervals:
               type: array
-              description: 'Tablica punktów i wartości'
+              description: Array of data intervals and values.
               items:
-                $ref: '#/components/schemas/timeseriesOsp'
-    redispatchTableOsd:
+                $ref: '#/components/schemas/TimeseriesTso'
+
+    DsoRedispatchTable:
       type: object
       properties:
-        redispatchTimeBegin:
+        redispatchingTimeBegin:
           type: string
           format: date-time
-          description: 'Początek redysponowania nierynkowego po stronie instalacji w UTC'
-        redispatchTimeEnd:
+          description: Start of non-market redispatching at the installation side, in UTC.
+        redispatchingTimeEnd:
           type: string
           format: date-time
-          description: 'Koniec redysponowania nierynkowego po stronie instalacji w UTC'
+          description: End of non-market redispatching at the installation side, in UTC.
         pZad:
-          type: integer
+          type: ['integer', 'null']
           format: int32
-          nullable: true
-          description: 'Zadany przez OSD, zdeterminowany wydanym przez OSP poleceniem redysponowania nierynkowego, maksymalny poziom dopuszczalnej generacji mocy czynnej w miejscu przyłączenia instalacji wiatrowej do sieci OSD, wyrażony w kW z dokładnością do 1 '
+          description: Maximum allowed active power generation level at the wind installation grid connection point determined by the DSO based on the TSO non-market redispatching order, expressed in kW with 1 kW precision.
         redispatchType:
           type: string
-          description: 'Typ polecenia, B - bilansowe, S - sieciowe'
+          description: "Order type: B — balancing, S — grid."
           enum:
             - B
             - S
-    redispatchOsp:
+
+    TsoRedispatch:
       type: object
       properties:
         mRID:
           type: string
-          description: 'Unikalny identyfikator MWE'
-          nullable: false
-          example: ''
+          description: Unique generation unit (MWE) identifier.
         redispatchTable:
           type: array
           items:
-            $ref: '#/components/schemas/redispatchTableOsp'
-    restrctionOsd:
-      type: object
-      properties:
-        mRID:
-          type: string
-          description: 'Unikalny identyfikator MWE'
-          nullable: false
-          example: ''
-        redispatchDate:
-          type: string
-          format: date
-          description: 'Doba redysponowania'
-          nullable: false
-          example: ''
-        seriesPeriods:
-          type: array
-          items:
-            type: object
-            description: 'Seria danych w podanym okresie (szereg czasowy)'
-            properties:
-              timeInterval:
-                type: object
-                description: 'Przedział czasowy - zakres szeregu czasowego'
-                properties:
-                  start:
-                    type: string
-                    format: date-timea
-                    description: 'Data i godzina początku okresu w UTC'
-                    example: "2024-03-12T02:00:00Z"
-                  end:
-                    type: string
-                    format: date-timea
-                    description: 'Data i godzina końca okresu w UTC'
-                    example: "2024-03-13T02:00:00Z"
-              resolution:
-                type: string
-                description: 'Rozdzielczość serii danych: PT15M - 15 minut'
-                enum:
-                  - PT15M
-              seriesPoints:
-                type: array
-                description: 'Tablica punktów i wartości'
-                items:
-                  $ref: '#/components/schemas/timeseriesPZadOsd'
-    redispatchOsd:
+            $ref: '#/components/schemas/TsoRedispatchTable'
+
+    DsoRedispatch:
       type: object
       properties:
         mRID:
@@ -551,144 +917,148 @@ components:
         redispatchTable:
           type: array
           items:
-            $ref: '#/components/schemas/redispatchTableOsd'
-    eWykCert:
+            $ref: '#/components/schemas/DsoRedispatchTable'
+
+    GridConstraint:
       type: object
       properties:
         mRID:
           type: string
-          description: 'Unikalny identyfikator MWE'
-          nullable: false
-          example: ''
+          description: Unique generation unit (MWE) identifier.
+        constraintDate:
+          type: string
+          format: date
+          description: Grid coinstraint day.
+        constraintTable:
+          type: array
+          items:
+            type: object
+            properties:
+              constraintTimeBegin:
+                type: string
+                format: date-time
+                description: Start of grid constraint in UTC.
+              constraintTimeEnd:
+                type: string
+                format: date-time
+                description: End of grid constraint in UTC.
+              pZadDso:
+                type: ['integer', 'null']
+                format: int32
+                description: Maximum allowed active power generation level at the installation grid connection point determined by the DSO expressed in kW with 1 kW precision.
+
+    EWykCert:
+      type: object
+      properties:
+        mRID:
+          type: string
+          description: Unique generation unit (MWE) identifier.
         redispatchDate:
           type: string
           format: date
-          description: 'Doba redysponowania wynikająca z polecenia wydanego przez OSP'
-          nullable: false
-          example: ''
+          description: Redispatch delivery day as determined by the TSO order.
         seriesPeriods:
           type: array
           items:
             type: object
-            description: 'Seria danych w podanym okresie (szereg czasowy)'
+            description: Data series for a given period (time series).
             properties:
               timeInterval:
                 type: object
-                description: 'Przedział czasowy - zakres szeregu czasowego'
+                description: Time interval — time series range.
                 properties:
                   start:
                     type: string
-                    format: date-timea
-                    description: 'Data i godzina początku okresu w UTC'
+                    format: date-time
+                    description: Period start date and time in UTC.
                     example: "2024-03-12T02:00:00Z"
                   end:
                     type: string
-                    format: date-timea
-                    description: 'Data i godzina końca okresu w UTC'
+                    format: date-time
+                    description: Period end date and time in UTC.
                     example: "2024-03-13T02:00:00Z"
               resolution:
                 type: string
-                description: 'Rozdzielczość serii danych: PT15M - 15 minut'
+                description: "Data series resolution: PT15M — 15 minutes."
                 enum:
                   - PT15M
               seriesPoints:
                 type: array
-                description: 'Tablica punktów i wartości'
+                description: Array of data points and values.
                 items:
-                  $ref: '#/components/schemas/timeseriesEWykCert'
-    uoze:
+                  $ref: '#/components/schemas/TimeseriesEWykCert'
+
+    Uoze:
       type: object
       properties:
         mRID:
           type: string
-          description: 'Unikalny identyfikator MWE'
-          nullable: false
-          example: ''
+          description: Unique generation unit (MWE) identifier.
         redispatchDate:
           type: string
           format: date
-          description: 'Doba redysponowania wynikająca z polecenia wydanego przez OSP'
-          nullable: false
-          example: ''
+          description: Redispatch delivery day as determined by the TSO order.
         notificationDate:
           type: string
           format: date
-          description: 'Data kiedy OSD został poinformowany o tym czy i jaka część zredukowanej energii powinna zostać rozliczona w danym systemie wsparcia'
-          nullable: false
-          example: ''
-        supportingSystem:
-          type: string
-          description: 'Systemie wsparcia w jakim powinna zostać rozliczona energia'
-          enum:
-            - auction
-            - auctionWith
-            - greenCertificate
+          description: Date when the DSO was notified about whether and what portion of reduced energy should be settled under the given support system.
         energy:
           type: integer
           format: int32
-          description: '% zredukowanej energii, która  powinna zostać rozliczona w danym systemie wsparcia (art. 93 ust. 18 ustawy o odnawialnych źródłach energii (Dz.U.2023.1436))'
-        ipaNumber:
-          type: string
-          description: 'numer IPA, którego dotyczy system wsparcia'
-    pob:
-      type: object
-      properties:
-        mRID:
-          type: string
-          description: 'Unikalny identyfikator MWE'
-          nullable: false
-          example: ''
-        pobName:
-          type: string
-          dscription: 'Nazwa podmiotu odpowiedzialnego za bilansowanie'
-          nullable: false
-        pobNIP:
-          type: string
-          description: 'NIP podmiotu odpowiedzialnego za bilansowanie'
-          nullable: false
-        pobDate:
-          type: string
-          format: date
-          description: 'Data od kiedy POB pełni funkcję dla MWE'
-          nullable: false
-    redispatchOspMsg:
+          description: Percentage of reduced energy that should be settled under the given support system (per Art. 93(18) of the Renewable Energy Sources Act).
+
+    # ──────────────────────────────────────────────
+    # Collection / wrapper schemas
+    # ──────────────────────────────────────────────
+
+    TsoRedispatches:
       type: array
       items:
-        $ref: '#/components/schemas/redispatchOsp'
-    reductionsOsd:
+        $ref: '#/components/schemas/TsoRedispatch'
+
+    DsoRedispatches:
       type: array
       items:
-        $ref: '#/components/schemas/redispatchOsd'
-    restrictionsOsd:
+        $ref: '#/components/schemas/DsoRedispatch'
+
+    DsoGridConstraints:
       type: array
       items:
-        $ref: '#/components/schemas/restrctionOsd'
-    eWykCerts:
+        $ref: '#/components/schemas/GridConstraint'
+
+    EWykCertCollection:
       type: array
       items:
-        $ref: '#/components/schemas/eWykCert'
-    uozes:
+        $ref: '#/components/schemas/EWykCert'
+
+    UozeCollection:
       type: array
       items:
-        $ref: '#/components/schemas/uoze'
-    pobs:
-      type: array
-      items:
-        $ref: '#/components/schemas/pob'
-    response:
+        $ref: '#/components/schemas/Uoze'
+
+    # ──────────────────────────────────────────────
+    # Response schemas
+    # ──────────────────────────────────────────────
+
+    SubmissionResponse:
       type: object
       properties:
         requestId:
           type: string
-          format: UUID
-          description: Unikalny identyfikator przyjętego do przetwarzania komunikatu
-    responseDetail:
+          format: uuid
+          description: Unique identifier assigned to the submitted message for processing.
+
+    ValidationDetail:
       type: object
-      description: Opis naruszeń walidacji w czasie przetwarzenia przesłanych dokumentów
+      description: Description of validation violations encountered during processing.
+      required:
+        - severity
+        - code
+        - message
       properties:
         severity:
           type: string
-          description: Stopień naruszenia walidacji powstałego w czasie przetwarzania
+          description: Severity level of the validation violation.
           enum:
             - INFO
             - WARN
@@ -696,34 +1066,30 @@ components:
           example: WARN
         code:
           type: string
-          description: Kod naruszenia walidacji powstałego w czasie przetwarzania
+          description: Validation violation code.
           maxLength: 10
-          example:
         field:
           type: string
-          description: wskazanie na element w zgłoszeniu
-          example:
+          description: Reference to the element in the submission.
         message:
           type: string
-          description: Opis naruszenia walidacji powstałego w czasie przetwarzania
-          example:
-      required:
-        - message
-        - severity
-        - code
-      title: ValidationResult
-    processingStatusResponse:
+          description: Description of the validation violation.
+
+    ProcessingStatusResponse:
       type: object
-      description: Odpowiedź na zapytanie o status przetwarzania przesłanego dokumentu
+      description: Response to a processing status query for a submitted document.
+      required:
+        - requestId
+        - status
       properties:
         requestId:
           type: string
           format: uuid
-          description: "Unikalne ID nadane przez system PSE, które służy do identyfikacji procesu przesłania danych"
+          description: Unique ID assigned by the system to identify the data submission process.
           example: 550e8400-e29b-41d4-a716-446655440000
         status:
           type: string
-          description: Status operacji przetworzenia przesłanych danych
+          description: Processing status of the submitted data.
           enum:
             - ACCEPTED
             - APPROVED
@@ -731,31 +1097,27 @@ components:
           example: APPROVED
         validationViolations:
           type: array
-          description: Błędy i naruszenia walidacji zgłoszone w czasie przetwarzania
-            przesłanych danych
+          description: Validation errors and violations reported during processing.
           items:
-            $ref: "#/components/schemas/responseDetail"
-      required:
-        - serverMsgId
-        - status
-    redispatchObjectsConfigurationResponse:
+            $ref: '#/components/schemas/ValidationDetail'
+
+    RedispatchObjectsConfigurationResponse:
       type: object
-      description: Odpowiedź z konfiguracją obiektów redysponowania
+      description: Response containing redispatching object configuration.
       properties:
         type:
           type: string
-          description: "Typ zapytania. 0 - zapytanie o listę wszystkich obiektów redysponowania danego OSD. 1 - zapytanie o listę wszystkich obiektów obiekty redysponowania danego OSD wraz z listą zasobów składających się na każdy z tych obiektów. 2 - zapytanie o listę zasobów składających się na wskazany obiekt redysponowania."
-          enum: [ 0, 1, 2 ]
+          description: "Query type: 0 — all objects, 1 — objects with resources, 2 — resources of specified objects."
+          enum: ['0', '1', '2']
         date:
           type: string
           format: date
-          description: "Doba konfiguracji. Czyli stan konfiguracji obiektów na dzień wskazany w komunikacie."
-          pattern: 'YYYY-MM-DD'
+          description: Configuration date — the object configuration status as of this date.
           examples:
-            - 2023-09-24
+            - '2023-09-24'
         objects:
           type: array
-          description: Lista obiektów redysponowania
+          description: List of redispatching objects.
           items:
             type: object
             required:
@@ -765,12 +1127,12 @@ components:
               redispatchingObjectMrid:
                 type: string
                 format: uuid
-                description: mRID obiektu redysponowania
+                description: Redispatch object mRID.
               redispatchingObjectCode:
                 type: string
                 minLength: 38
                 maxLength: 38
-                description: Kod obiektu redysponowania
+                description: Redispatch object code.
                 example: KA-10106-19027-03/P/PV/PD/G1/WN/BZ/BI/
               objectResources:
                 type: array
@@ -784,35 +1146,34 @@ components:
                     registeredResourceMrid:
                       type: string
                       format: uuid
-                      description: mRID zasobu
+                      description: Resource mRID.
                       example: d0443a92-f807-45f0-867e-70cf5321dec7
                     registeredResourceCode:
                       type: string
                       minLength: 36
                       maxLength: 36
-                      description: Kod zasobu
+                      description: Resource code.
                     registeredResourcePRef:
                       type: number
-                      description: Moc referencyjna zasobu
+                      description: Reference power of the resource.
                       minimum: 0
                       maximum: 99999.999
                       multipleOf: 0.001
+
     ErrorResponse:
       type: object
-      description: Odpowiedź z serwera w przypadku błędu
+      description: Error response returned by the server.
+      required:
+        - message
+        - errorDetails
       properties:
         message:
           type: string
-          description: Opis błędu
-          example: Błąd przetwarzania
+          description: Error description.
         errorDetails:
           type: string
-          description: Szegóły przyczyny błędu
-          example: Brak elementu o podanym mRID
+          description: Detailed cause of the error.
         requestId:
           type: string
-          format: UUID
-          description: Unikalny identyfikator przyjętego do przetwarzania komunikatu
-      required:
-        - errorDetails
-        - message
+          format: uuid
+          description: Unique identifier of the submitted message.
