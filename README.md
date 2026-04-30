@@ -6,7 +6,7 @@ Specyfikacja i dokumentacja API dla nierynkowego redysponowania wydawanego przez
 
 ## Specyfikacja OpenAPI
 
-Pełna specyfikacja techniczna API dostępna jest w pliku: [`specs/redispatching-openapi.yml`](../specs/redispatching-openapi.yml)
+Pełna specyfikacja techniczna API dostępna jest w pliku: [`specs/redispatching-openapi.yml`](specs/redispatching-openapi.yml)
 
 Dostępna jest również [dokumentacja API w formacie REDOC](https://polskie-sieci-elektroenergetyczne.github.io/redispatching-api/)
 
