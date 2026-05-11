@@ -2,12 +2,12 @@
 
 ## Opis
 
-Przekazanie informacji o wydanych przez OSD poleceniach redysponowania za dobę poprzedzającą w ramach wydanych poleceń przez OSP polegające na podaniu informacji o:
+Przekazanie informacji o wydanych przez OSD poleceniach redysponowania w ramach wydanych, przez OSP poleceń polegające na podaniu informacji o:
 - identyfikatorze mRID (unikalny identyfikator MWE) MWE
 - dobie redysponowania, a w ramach doby:
   - początku redysponowania nierynkowego po stronie instalacji — data i czas
   - końcu redysponowania nierynkowego po stronie instalacji — data i czas
-  - zadanym przez OSD maksymalnym poziomie dopuszczalnej generacji mocy czynnej w miejscu przyłączenia instalacji do sieci OSD, wyrażonym w kW z dokładnością do 1 MW
+  - zadanym przez OSD maksymalnym poziomie dopuszczalnej generacji mocy czynnej w miejscu przyłączenia instalacji do sieci OSD, wyrażonym w kW z dokładnością do 1 kW
   - typie polecenia: bilansowe / sieciowe
 
 ## Uczestnicy

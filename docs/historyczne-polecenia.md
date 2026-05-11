@@ -3,10 +3,9 @@
 ## Opis
 
 Poinformowanie OSD o wydanych poleceniach bilansowych oraz sieciowych w podanej dobie. Przekazanie informacji o wydanych przez OSP poleceniach redysponowania za dobę poprzedzającą polegające na podaniu informacji:
-- Identyfikator polecenia redysponowania
 - MWE wchodzące w skład obiektu redysponowania
 - zakres czasowy wydanego polecenia (data początku i końca redysponowania), a następnie w serii podanie:
-  - zadany maksymalny poziom dopuszczalnej generacji mocy czynnej w miejscu przyłączenia instalacji do sieci OSD, wyrażony w MW z dokładnością do 1 kW podawany w przedziałach czasowych
+  - zadany maksymalny poziom dopuszczalnej generacji mocy czynnej w miejscu przyłączenia instalacji do sieci OSD, wyrażony w kW z dokładnością do 1 kW podawany w przedziałach czasowych
   - typ polecenia (bilansowy lub sieciowy) podawany w przedziałach czasowych
 
 ## Uczestnicy
@@ -36,7 +35,7 @@ Poinformowanie OSD o wydanych poleceniach bilansowych oraz sieciowych w podanej 
 
 Schemat `TsoRedispatches` to tablica obiektów `TsoRedispatch`, z których każdy zawiera:
 - `mRID` — unikalny identyfikator MWE
-- `redispatchTable` — tablica `TsoRedispatchTable` z serią danych (przedział czasowy, rozdzielczość PT15M, punkty `TimeseriesTso` z polami: position, pZad, redispatchType)
+- `redispatchTable` — tablica `TsoRedispatchTable` z serią danych (przedział czasowy,  punkty `TimeseriesTso` z polami: data i czas końca przedziału, pZad, redispatchType)
 
 ## Uwierzytelnianie
 

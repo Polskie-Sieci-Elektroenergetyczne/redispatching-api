@@ -7,7 +7,7 @@ Przekazanie informacji o E_WYK_CERT dla MWE, które były redysponowane przez OS
 - dacie redysponowania wynikającej z polecenia wydanego przez OSP
 - E_WYK_CERT — wolumenie energii wyprodukowanej przez instalację wiatrową w przedziale czasowym t, zmierzonym na zaciskach generatorów turbin wiatrowych, wyrażonym w kWh z dokładnością do 2 miejsc po przecinku
 
-Przedziały czasowe wskazują czasy zakończenia kolejnych 15-minutowych przedziałów czasowych t doby, w której zastosowano redysponowanie.
+Przedziały czasowe wskazują czasy zakończenia kolejnych 15-minutowych interwałów czasowych t doby, w której zastosowano redysponowanie.
 
 ## Uczestnicy
 
