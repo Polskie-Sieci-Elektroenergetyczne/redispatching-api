@@ -76,4 +76,4 @@ Specyfikacja w zakresie rozliczeń nierynkowego redysponowania opiera się na na
 | Ograniczenia w sieci OSD niezwiązane z wydanym poleceniem OSP | Podmiot | OSP | [Ograniczenia sieciowe](docs/ograniczenia-sieciowe.md) |
 | Wolumen energii wyprodukowanej objętej systemem wsparcia (E_WYK_CERT) | Podmiot | OSP | [Energia certyfikowana](docs/energia-certyfikowana.md) |
 | Zgłoszenia informacji o chęci skorzystania z aukcyjnego systemu wsparcia (uOZE) | Podmiot | OSP | [System wsparcia uOZE](docs/system-wsparcia-uoze.md) |
-| Zmiana podmiotu odpowiedzialnego za bilansowanie (POB) dla pojedynczego MWE | Podmiot | OSP | [Zmiana POB](docs/zmiana-pob.md) |
+

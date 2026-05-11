@@ -5,7 +5,7 @@
 Przekazanie informacji o ograniczeniach występujących w sieci OSD niezwiązanych z wydanymi poleceniami OSP polegające na podaniu informacji o:
 - identyfikatorze mRID (unikalny identyfikator MWE) MWE
 - dacie redysponowania wynikającej z polecenia wydanego przez OSP
-- maksymalnym poziomie generacji mocy czynnej instalacji zdeterminowanym przyczynami innymi niż wydanym przez OSP poleceniem redysponowania nierynkowego, w poszczególnych przedziałach czasowych, wyrażonym w kW z dokładnością do 1 MW
+- maksymalnym poziomie generacji mocy czynnej instalacji zdeterminowanym przyczynami innymi niż wydanym przez OSP poleceniem redysponowania nierynkowego, w poszczególnych przedziałach czasowych, wyrażonym w kW z dokładnością do 1 kW
 
 ## Uczestnicy
 
@@ -26,7 +26,7 @@ Przesłanie ograniczeń sieciowych OSD.
 **Ciało zapytania:** `DsoNetworkConstraints` — tablica obiektów `NetworkConstraint`, z których każdy zawiera:
 - `mRID` — unikalny identyfikator MWE
 - `redispatchDate` — doba redysponowania (date)
-- `seriesPeriods` — serie danych z przedziałami czasowymi (rozdzielczość PT15M) i punktami `TimeseriesPZadDso` (position, pZadDso)
+- `constraintTable` — serie danych z przedziałami czasowymi oraz maksymalnym poziomie generacji (constraintTimeBegin, constraintTimeEnd, pZadDso)
 
 | Kod | Opis | Schemat |
 |-----|------|---------|

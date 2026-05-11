@@ -42,9 +42,8 @@ Pobranie zgłoszeń uOZE przekazanych do OSD przez system WOZE.
 Przekazanie informacji o zgłoszeniach właścicieli MWE z aplikacji WOZE po wydanym poleceniu przez OSP, polegające na podaniu informacji o:
 - identyfikatorze mRID (unikalny identyfikator MWE) MWE
 - dacie redysponowania wynikającej z polecenia wydanego przez OSP
-- w jakim systemie wsparcia powinna zostać rozliczona energia
+- dacie powiadomienia przez MWE o chęci skorzystania z systemu wsparcia
 - jaka część (%) zredukowanej energii powinna zostać rozliczona w danym systemie wsparcia
-- numerze IPA, którego dotyczy system wsparcia
 
 ---
 
@@ -61,9 +60,7 @@ Przesłanie zgłoszeń uOZE złożonych poza aplikacją WOZE.
 - `mRID` — unikalny identyfikator MWE
 - `redispatchDate` — doba redysponowania (date)
 - `notificationDate` — data powiadomienia OSD (date)
-- `supportingSystem` — system wsparcia: `auction`, `auctionWith`, `greenCertificate`
 - `energy` — % zredukowanej energii do rozliczenia w danym systemie wsparcia
-- `ipaNumber` — numer IPA
 
 | Kod | Opis | Schemat |
 |-----|------|---------|
